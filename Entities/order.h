@@ -10,7 +10,9 @@ typedef struct Order
     int numRoom;
     char periodOfStay[12];
     float price;
-
+    int idEmployee;
+    char cpfClient[15];
+    int idOrder;
 }Order;
 
 

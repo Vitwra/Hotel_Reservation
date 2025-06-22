@@ -15,7 +15,7 @@ Employee *addEmployee(int id, const char *name, const char *position){
         
         employee->id = id;
         
-        // Copia valores para os campos do disco
+        // Copia valores de string para os campos do disco
         strncpy(employee->name, name, sizeof(employee->name) - 1);
         strncpy(employee->position, position, sizeof(employee->position) - 1);
     }
