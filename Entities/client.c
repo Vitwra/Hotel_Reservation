@@ -60,8 +60,8 @@ void printClient(Client *c){
 int lengthOfRegisterClient() {
     return sizeof(char) * 50   //cpf
         + sizeof(char) * 15    //nome
-        + sizeof(char) * 12    //telefone
-        + sizeof(char) * 17;   //Numero da reserva
+        + sizeof(char) * 15    //telefone
+        + sizeof(char) * 10;   //Numero da reserva
 }
 
 //Retorna a quantidade de registros no arquivo
@@ -116,7 +116,7 @@ void madeDisorderedBaseClient(FILE *arq, int length, int qntSwap) {
         char numReservation[17];
 
         // Gera nome aleatório
-        gerarNomeAleatorio(name, 5);
+        generateRandomName(name, 5);
 
         // Gera CPF falso com 11 dígitos numéricos
         snprintf(cpf, sizeof(cpf), "%011d", rand() % 1000000000 + i * 17);
@@ -141,13 +141,14 @@ void printDataBaseClient(FILE *arq){
     rewind(arq);
     Client *c;
 
-    while ((c = readClient(arq)) != NULL)
+    while ((c = readClient(arq)) != NULL){
         printClient(c);
         free(c); //Libera logo após imprimir
     }
+    }
 
 //Algoritmo de Busca Sequencial/linear
-Client *linearSearchClient(int key, FILE *arq) {
+Client *linearSearchClient(const char *key, FILE *arq) {
     Client *c;
     int find = 0;
     clock_t start_time, end_time;
@@ -156,34 +157,30 @@ Client *linearSearchClient(int key, FILE *arq) {
     start_time = clock(); //tempo inicial
 
     rewind(arq);
+
     while ((c = readClient(arq)) != NULL)
     {
-        if (c->cpf == key)
+        if (strcmp(c->cpf, key) == 0)
         {
-            find = 1;
-            break;
+            end_time = clock();
+            cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
+            printf("\nClient found in %f seconds.\n", cpu_time_used);
+            return c;
         }
+        free(c);
     }
 
     end_time = clock(); //tempo final
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC; //Calcula o tempo de execução
-
-    if (find == 1)
-    {
-        printf("\nClient founded in %f seconds.\n", cpu_time_used);
-        return c;
-    } 
-    else {
-        printf("\nClient not found. Time of search: %f seconds.\n", cpu_time_used);
-        free(c);
-        return NULL;
-    }
+    printf("\nClient not found. Search time: %f seconds.\n", cpu_time_used);
+    return NULL;
 }
 
 //Algoritmo de Busca Binária
-Client *binarySearchClient(FILE *arq, char cpf, int start, int end) {
+Client *binarySearchClient(FILE *arq, const char *key, int start, int end) {
     clock_t start_time, end_time;
     double cpu_time_used;
+
     start_time = clock(); // Captura o tempo inicial
 
     while (start <= end) {
@@ -192,13 +189,15 @@ Client *binarySearchClient(FILE *arq, char cpf, int start, int end) {
 
         Client *c = readClient(arq);
 
-        if (c->cpf == cpf) {
-            end_time = clock(); // Captura o tempo final
-            cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC; // Calcula o tempo de execução
-            printf("\nClient founded in %f seconds.\n", cpu_time_used);
+        int cmp = strcmp(c->cpf, key);
+
+        if (cmp == 0) {
+            end_time = clock(); 
+            cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC; 
+            printf("\nClient found in %f seconds.\n", cpu_time_used);
             return c;
         }
-        if (c->cpf > cpf) {
+        if (cmp > 0) {
             end = middle - 1;
         } else {
             start = middle + 1;
@@ -208,7 +207,7 @@ Client *binarySearchClient(FILE *arq, char cpf, int start, int end) {
 
     end_time = clock(); // Captura o tempo final
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC; // Calcula o tempo de execução
-    printf("\nClient not found. Time of search %f seconds.\n", cpu_time_used);
+    printf("\nClient not found. Search time %f seconds.\n", cpu_time_used);
     return NULL;
 }
 
@@ -229,8 +228,8 @@ void bubbleSortClient(FILE *arq, int length){
             fseek(arq, (j + 1) * lengthOfRegisterClient(), SEEK_SET);
             nextClient = readClient(arq);
 
-            // Compara os CPF dos clientes
-            if (currentClient->cpf > nextClient->cpf) {
+            // Compara os CPF dos clientes 
+            if (strcmp(currentClient->cpf, nextClient->cpf) > 0) {
                 // Troca o registro dos clientes de lugar no arquivo
                 fseek(arq, j * lengthOfRegisterClient(), SEEK_SET);
                 saveClient(nextClient, arq);

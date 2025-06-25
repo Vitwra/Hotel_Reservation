@@ -8,8 +8,8 @@ typedef struct Client
 {
     char name[50];
     char cpf[15];
-    char phone[12];
-    char numReservation[17];
+    char phone[15];
+    char numReservation[10];
 }Client;
 
 //Básico
@@ -35,10 +35,10 @@ void madeDisorderedBaseClient(FILE *arq, int length, int qntSwap);
 void printDataBaseClient(FILE *arq);
 
 //Ordenação e Busca
-Client *linearSearchClient(int key, FILE *arq);
+Client *linearSearchClient(const char *key, FILE *arq);
 
-Client *binarySearchClient(FILE *arq, char cpf, int start, int end);
+Client *binarySearchClient(FILE *arq, const char *cpf, int start, int end);
 
-void bubbleSortEmployee(FILE *arq, int length);
+void bubbleSortClient(FILE *arq, int length);
 
 #endif

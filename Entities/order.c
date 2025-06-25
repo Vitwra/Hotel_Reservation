@@ -4,13 +4,13 @@
 #include <string.h>
 
 // Cria uma compra
-Order *madeOrder(int idOrder, int qntOfGuests, int numRoom, const char *periodOfStay, float price, int idEmployee, const char *cpfClient)
+Order *addOrder(int idOrder, int qntOfGuests, int numRoom, const char *periodOfStay, float price, int idEmployee, const char *cpfClient)
 {
     Order *order = (Order *)malloc(sizeof(Order));
 
-    if (order)
-        memset(order, 0, sizeof(Order));
-
+    if (order){
+    memset(order, 0, sizeof(Order));
+    }
     order->idOrder = idOrder;
     order->numRoom = numRoom;
     order->price = price;
@@ -28,7 +28,7 @@ void saveOrder(Order *order, FILE *arq)
 {
     fwrite(&order->idOrder, sizeof(int), 1, arq);
     fwrite(&order->numRoom, sizeof(int), 1, arq);
-    fwrite(&order->price, sizeof(int), 1, arq);
+    fwrite(&order->price, sizeof(float), 1, arq);
     fwrite(&order->idEmployee, sizeof(int), 1, arq);
     fwrite(&order->qntOfGuests, sizeof(int), 1, arq);
     fwrite(order->cpfClient, sizeof(char), sizeof(order->cpfClient), arq);
@@ -45,12 +45,12 @@ void printingOrder(Order *order)
     printf("Quantity of guests: %d\n", order->qntOfGuests);
     printf("Period of Stay: %s\n", order->periodOfStay);
     printf("Room number: %d\n", order->numRoom);
-    printf("Valor Total: %.2f\n", order->price);
+    printf("Total value: %.2f\n", order->price);
     printf("**********************************************\n");
 }
 
 // Imprime todas as compras armazenadas no arquivo
-void pritingAllOrders(FILE *arq)
+void printingAllOrders(FILE *arq)
 {
     printf("Printing database...\n");
 
@@ -74,13 +74,14 @@ Order *readOrder(FILE *in)
         free(order);
         return NULL;
     }
-    fread(&order->idEmployee, sizeof(int), 1, in);
-    fread(&order->idOrder, sizeof(int), 1, in);
     fread(&order->numRoom, sizeof(int), 1, in);
     fread(&order->price, sizeof(float), 1, in);
+    fread(&order->idEmployee, sizeof(int), 1, in);
     fread(&order->qntOfGuests, sizeof(int), 1, in);
     fread(order->cpfClient, sizeof(char), sizeof(order->cpfClient), in);
     fread(order->periodOfStay, sizeof(char), sizeof(order->periodOfStay), in);
+
+return order;
 }
 
 // Busca sequencial por um ID de uma compra
@@ -96,18 +97,11 @@ Order *linearSearchOrder(int key, FILE *arq)
     {
         if (o->idOrder == key)
         {
-            find = 1;
-            break;
+            return o;
         }
+        free(o);
     }
-    if (find == 1)
-    {
-        return o;
-    }
-    else
-    {
         printf("Order not found\n");
         free(o);
         return NULL;
-    }
 }

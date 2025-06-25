@@ -25,9 +25,9 @@ int lengthOfRegisterEmployee();
 
 int qntOfRegisterEmployee(FILE *arq);
 
-void shuffleEmployee(int *vet, int max, int switchs);
+void shuffleEmployee(int *vet, int max, int swap);
 
-void madeDisorderedBaseEmployee (FILE *arq, int length, int qntSwitchs);
+void createDisorderedEmployeeDatabase (FILE *arq, int length, int qntSwap);
 
 void generateRandomName(char *name, int lenght);
 
