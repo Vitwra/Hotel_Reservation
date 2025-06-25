@@ -3,7 +3,7 @@
 ## 🧠 Descrição
 A aplicação "Hotel Reservation" simula um sistema de gerenciamento de reservas de quarto em um hotel. Foram utilizadas como fundamento estruturas de dados vista em sala de aula, na disciplina de Algoritmos e Estruturas de Dados II.
 
-## 📌 Objetivo
+## 📌 Funcionalidades
 O objetivo do projeto é garantir o gerenciamento otimizado e eficiente dos dados em disco.
 - Busca por uma chave fornecida pelo cliente;
 - Busca por um colaborador por meio de um ID único;
