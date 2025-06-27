@@ -16,7 +16,7 @@ Employee *addEmployee(int id, const char *name, const char *position)
 
         employee->id = id;
 
-        // Copia valores de string para os campos do disco
+        // Copia valores de string para os campos de employee
         strncpy(employee->name, name, sizeof(employee->name) - 1);
         strncpy(employee->position, position, sizeof(employee->position) - 1);
         employee->next = -1; //incicializa o prox employee como -1, indicando NULL
@@ -66,7 +66,7 @@ void printEmployee(Employee *employee)
     printf("**********************************************\n");
 }
 
-// Retorna o tamanho do disco em bytes
+// Retorna o tamanho de employee em bytes
 int lengthOfRegisterEmployee()
 {
     return sizeof(int)          // id

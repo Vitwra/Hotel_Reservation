@@ -13,7 +13,7 @@ Client *addClient(const char *cpf, const char *name, const char *phone, const ch
     {
         memset(c, 0, sizeof(Client)); // Zera a memoria
         
-        // Copia valores para os campos do disco
+        // Copia valores para os campos de client
         strncpy(c->name, name, sizeof(c->name) - 1);
         strncpy(c->cpf, cpf, sizeof(c->cpf) - 1);
         strncpy(c->phone, phone, sizeof(c->phone) - 1);

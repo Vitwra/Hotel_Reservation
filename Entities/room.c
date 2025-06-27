@@ -53,7 +53,7 @@ void printRoom(Room *room)
     printf("Room number: %d\n", room->roomNumber);
     printf("Room type (Single, Double, Suite): %s\n", room->type);
     printf("Room capacity: %d\n", room->capacity);
-    printf("Price diary: %f\n", room->basePrice);
+    printf("Price diary: %.2f\n", room->basePrice);
     printf("Status (Free, Occupied): %s\n", room->status);
     printf("**********************************************\n");
 }
@@ -137,7 +137,7 @@ Room *linearSearchRoom(int key, FILE *arq)
         {
             end_time = clock();
             cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
-            printf("\nEmployee found in %f seconds.\n", cpu_time_used);
+            printf("\nRoom found in %f seconds.\n", cpu_time_used);
             return r;
         }
         free(r);  
@@ -165,7 +165,7 @@ Room *binarySearchRoom(int numberRoom, FILE *arq, int start, int end)
         {
             end_time = clock();
             cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
-            printf("Disco encontrado em %f segundos.\n", cpu_time_used);
+            printf("Room found in %f seconds.\n", cpu_time_used);
             return r;
         }
         if (r->roomNumber > numberRoom)
@@ -181,7 +181,7 @@ Room *binarySearchRoom(int numberRoom, FILE *arq, int start, int end)
 
     end_time = clock();                                                 // Captura o tempo final
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC; // Calcula o tempo de execução
-    printf("Disco nao encontrado. Tempo de busca: %f segundos.\n", cpu_time_used);
+    printf("Room not found. Search time: %f seconds.\n", cpu_time_used);
     return NULL;
 }
 
@@ -247,7 +247,7 @@ void bubbleSortRoom(FILE *arq, int length)
             // Compara os IDs dos quartos
             if (currentRoom->roomNumber > nextRoom->roomNumber)
             {
-                // Troca os discos de lugar no arquivo
+                // Troca os room de lugar no arquivo
                 fseek(arq, j * lengthOfRegisterRoom(), SEEK_SET);
                 saveRoom(nextRoom, arq);
 
@@ -257,7 +257,7 @@ void bubbleSortRoom(FILE *arq, int length)
                 swapped = 1;
             }
 
-            // Libera a memória alocada para os discos
+            // Libera a memória alocada para os room
             free(currentRoom);
             free(nextRoom);
         }
