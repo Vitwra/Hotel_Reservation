@@ -17,6 +17,8 @@ typedef struct Order
 
 Order *addOrder(int idOrder, int qntOfGuests, int numRoom, const char *periodOfStay, float price, int idEmployee, const char *cpfClient);
 
+int getLastIDOrder (FILE *arq);
+
 void saveOrder(Order *order, FILE *arq);
 
 void printingOrder(Order *order);
@@ -26,4 +28,5 @@ void printingAllOrders(FILE *arq);
 Order *readOrder(FILE *in);
 
 Order *linearSearchOrder(int key, FILE *arq);
+
 #endif

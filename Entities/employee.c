@@ -19,6 +19,7 @@ Employee *addEmployee(int id, const char *name, const char *position)
         // Copia valores de string para os campos do disco
         strncpy(employee->name, name, sizeof(employee->name) - 1);
         strncpy(employee->position, position, sizeof(employee->position) - 1);
+        employee->next = -1; //incicializa o prox employee como -1, indicando NULL
     }
     return employee;
 }
@@ -29,6 +30,10 @@ void saveEmployee(Employee *employee, FILE *arq)
     fwrite(&employee->id, sizeof(int), 1, arq);
     fwrite(employee->name, sizeof(char), sizeof(employee->name), arq);
     fwrite(employee->position, sizeof(char), sizeof(employee->position), arq);
+
+    //salva nextID como long
+    long nextID = employee->next;
+    fwrite(&nextID, sizeof(long), 1, arq);
 }
 
 // Le um colaborador do arquivo na posição atual
@@ -43,6 +48,7 @@ Employee *readEmployee(FILE *in)
     }
     fread(employee->name, sizeof(char), sizeof(employee->name), in);
     fread(employee->position, sizeof(char), sizeof(employee->position), in);
+    fread(&employee->next, sizeof(long), 1, in);
 
     return employee;
 }
@@ -54,6 +60,9 @@ void printEmployee(Employee *employee)
     printf("Employee ID: %d\n", employee->id);
     printf("Name: %s\n", employee->name);
     printf("Position in the company: %s\n", employee->position);
+
+    //imprime valor do prox ponteiro
+    printf("Next employee adress: %ld\n", employee->next);
     printf("**********************************************\n");
 }
 
@@ -62,7 +71,8 @@ int lengthOfRegisterEmployee()
 {
     return sizeof(int)          // id
            + sizeof(char) * 50  // nome
-           + sizeof(char) * 40; // cargo
+           + sizeof(char) * 40 // cargo
+           + sizeof(long);    //proximo employee
 }
 
 // Retorna a quantidade de registros no arquivo
@@ -76,8 +86,6 @@ int qntOfRegisterEmployee(FILE *arq)
 // Embaralha base de dados
 void shuffleEmployee(int *vet, int max, int swap)
 {
-    srand(time(NULL));
-
     for (int i = 0; i < swap; i++)
     {
         int j = rand() % max;
@@ -89,16 +97,6 @@ void shuffleEmployee(int *vet, int max, int swap)
     }
 }
 
-// Gera nome aleatório com 5 letras
-void generateRandomName(char *name, int lenght)
-{
-    for (int i = 0; i < lenght; i++)
-    {
-        name[i] = 'a' + rand() % 26;
-    }
-    name[lenght] = '\0';
-}
-
 // Cria base de dados desordenada
 void createDisorderedEmployeeDatabase(FILE *arq, int length, int qntSwap)
 {
@@ -106,7 +104,7 @@ void createDisorderedEmployeeDatabase(FILE *arq, int length, int qntSwap)
     Employee *e;
 
     const char *position[] = {
-        "Recepcionista",
+        "Receptionist",
         "Concierge",
     };
     int numOfPosition = sizeof(position) / sizeof(position[0]);
@@ -123,14 +121,11 @@ void createDisorderedEmployeeDatabase(FILE *arq, int length, int qntSwap)
 
     for (int i = 0; i < length; i++)
     {
-        char name[6];
-        generateRandomName(name, 5);
-
         // Sorteia um cargo do vetor
         const char *randomposition = position[rand() % numOfPosition];
 
         // Cria e salva o funcionário
-        e = addEmployee(vet[i], name, randomposition);
+        e = addEmployee(vet[i], "anonymous", randomposition);
         saveEmployee(e, arq);
         free(e);
     }
@@ -147,7 +142,7 @@ void printDataBaseEmployee(FILE *arq)
     while ((e = readEmployee(arq)) != NULL)
     {
         printEmployee(e);
-        free(e); // Libera logo após imprimir
+        free(e); 
     }
 }
 
@@ -155,13 +150,13 @@ void printDataBaseEmployee(FILE *arq)
 Employee *linearSearchEmployee(int key, FILE *arq)
 {
     Employee *e;
-    int find = 0;
     clock_t start_time, end_time;
     double cpu_time_used;
 
     start_time = clock(); // tempo inicial
 
     rewind(arq);
+
     while ((e = readEmployee(arq)) != NULL)
     {
         if (e->id == key)
@@ -171,12 +166,11 @@ Employee *linearSearchEmployee(int key, FILE *arq)
             printf("\nEmployee found in %f seconds.\n", cpu_time_used);
             return e;
         }
-        free(e); // LIBERAR MEMÓRIA AQUI
+        free(e); // LIBERAR MEMÓRIA 
     }
     end_time = clock();                                                 // tempo final
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC; // Calcula o tempo de execução
-    printf("\nEmployee not found. Time of search: %f seconds.\n", cpu_time_used);
-    free(e);
+    printf("\nEmployee not found. Search time: %f seconds.\n", cpu_time_used);
     return NULL;
 }
 
@@ -198,7 +192,7 @@ Employee *binarySearchEmployee(FILE *arq, int id, int start, int end)
         {
             end_time = clock();                                                 // Captura o tempo final
             cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC; // Calcula o tempo de execução
-            printf("\nEmployee founded in %f seconds.\n", cpu_time_used);
+            printf("\nEmployee found in %f seconds.\n", cpu_time_used);
             return e;
         }
         if (e->id > id)
@@ -214,7 +208,7 @@ Employee *binarySearchEmployee(FILE *arq, int id, int start, int end)
 
     end_time = clock();                                                 // Captura o tempo final
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC; // Calcula o tempo de execução
-    printf("\nEmployee not found. Time of search %f seconds.\n", cpu_time_used);
+    printf("\nEmployee not found. Search time %f seconds.\n", cpu_time_used);
     return NULL;
 }
 

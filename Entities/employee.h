@@ -9,6 +9,7 @@ typedef struct Employee
     int id;
     char name[50];
     char position[40];
+    long next;  //ponteiro para o proximo employee
 } Employee;
 
 //Principais
@@ -28,8 +29,6 @@ int qntOfRegisterEmployee(FILE *arq);
 void shuffleEmployee(int *vet, int max, int swap);
 
 void createDisorderedEmployeeDatabase (FILE *arq, int length, int qntSwap);
-
-void generateRandomName(char *name, int lenght);
 
 void printDataBaseEmployee(FILE *arq);
 

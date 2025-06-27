@@ -58,8 +58,8 @@ void printClient(Client *c){
 
 //Retorna o tamanho do cadastro do cliente em bytes
 int lengthOfRegisterClient() {
-    return sizeof(char) * 50   //cpf
-        + sizeof(char) * 15    //nome
+    return sizeof(char) * 15   //cpf
+        + sizeof(char) * 50    //nome
         + sizeof(char) * 15    //telefone
         + sizeof(char) * 10;   //Numero da reserva
 }
@@ -86,15 +86,6 @@ void shuffleClient(int *vet, int max, int swap) {
     }
 }
 
-// Gera nome aleatório com 5 letras
-void generateRandomName(char *name, int length) {
-    for (int i = 0; i < length; i++) {
-        name[i] = 'a' + rand() % 26;
-    }
-    name[length] = '\0';
-}
-
-// Cria base de dados desordenada
 void madeDisorderedBaseClient(FILE *arq, int length, int qntSwap) {
     int vet[length];
     Client *c;
@@ -110,24 +101,25 @@ void madeDisorderedBaseClient(FILE *arq, int length, int qntSwap) {
     printf("\nGenerating database...\n");
 
     for (int i = 0; i < length; i++) {
-        char name[6];
+        char name[50];
         char cpf[15];
-        char phone[12];
-        char numReservation[17];
+        char phone[15];
+        char numReservation[15];
 
-        // Gera nome aleatório
-        generateRandomName(name, 5);
+        //Gera nome aleatorio de client
+        sprintf(name, "Client%c", 'A' + rand() % 26);
 
-        // Gera CPF falso com 11 dígitos numéricos
-        snprintf(cpf, sizeof(cpf), "%011d", rand() % 1000000000 + i * 17);
+        // Gera CPF com 11 dígitos numéricos
+        snprintf(cpf, sizeof(cpf), "%03d.%03d.%03d-%02d",
+            rand() % 1000, rand() % 1000, rand() % 1000, rand() % 100);
 
-        // Gera telefone fictício
-        snprintf(phone, sizeof(phone), "99999-%04d", rand() % 10000);
+        // Gera telefone (exemplo: "(99)99999-1234")
+        snprintf(phone, sizeof(phone), "(%02d) %05d-%04d",
+            rand() % 100, rand() % 100000, rand() % 10000);
 
-        // Número de reserva aleatório
+        // Número de reserva aleatório (exemplo: "R1234")
         snprintf(numReservation, sizeof(numReservation), "R%04d", rand() % 10000);
 
-        // Cria e salva o cliente
         c = addClient(cpf, name, phone, numReservation);
         saveClient(c, arq);
         free(c);
@@ -150,7 +142,7 @@ void printDataBaseClient(FILE *arq){
 //Algoritmo de Busca Sequencial/linear
 Client *linearSearchClient(const char *key, FILE *arq) {
     Client *c;
-    int find = 0;
+    
     clock_t start_time, end_time;
     double cpu_time_used;
 
@@ -174,80 +166,4 @@ Client *linearSearchClient(const char *key, FILE *arq) {
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC; //Calcula o tempo de execução
     printf("\nClient not found. Search time: %f seconds.\n", cpu_time_used);
     return NULL;
-}
-
-//Algoritmo de Busca Binária
-Client *binarySearchClient(FILE *arq, const char *key, int start, int end) {
-    clock_t start_time, end_time;
-    double cpu_time_used;
-
-    start_time = clock(); // Captura o tempo inicial
-
-    while (start <= end) {
-        int middle = start + (end - start) / 2;
-        fseek(arq, middle * lengthOfRegisterClient(), SEEK_SET);
-
-        Client *c = readClient(arq);
-
-        int cmp = strcmp(c->cpf, key);
-
-        if (cmp == 0) {
-            end_time = clock(); 
-            cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC; 
-            printf("\nClient found in %f seconds.\n", cpu_time_used);
-            return c;
-        }
-        if (cmp > 0) {
-            end = middle - 1;
-        } else {
-            start = middle + 1;
-        }
-        free(c);
-    }
-
-    end_time = clock(); // Captura o tempo final
-    cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC; // Calcula o tempo de execução
-    printf("\nClient not found. Search time %f seconds.\n", cpu_time_used);
-    return NULL;
-}
-
-//Algoritmo Bubble Sort para ordenar a base de dados
-void bubbleSortClient(FILE *arq, int length){
-    Client *currentClient = NULL;
-    Client *nextClient = NULL;
-    int swapped;
-
-    for (int i = 0; i < length - 1; i++) {
-        swapped = 0;
-        for (int j = 0; j < length - i - 1; j++) {
-            // Posiciona o cursor no início do cliente atual
-            fseek(arq, j * lengthOfRegisterClient(), SEEK_SET);
-            currentClient = readClient(arq);
-
-            // Posiciona o cursor no início do próximo cliente
-            fseek(arq, (j + 1) * lengthOfRegisterClient(), SEEK_SET);
-            nextClient = readClient(arq);
-
-            // Compara os CPF dos clientes 
-            if (strcmp(currentClient->cpf, nextClient->cpf) > 0) {
-                // Troca o registro dos clientes de lugar no arquivo
-                fseek(arq, j * lengthOfRegisterClient(), SEEK_SET);
-                saveClient(nextClient, arq);
-
-                fseek(arq, (j + 1) * lengthOfRegisterClient(), SEEK_SET);
-                saveClient(currentClient, arq);
-
-                swapped = 1;
-            }
-
-            // Libera a memória alocada para os clientes
-            free(currentClient);
-            free(nextClient);
-        }
-
-        // Se nenhuma troca foi feita, a lista já está ordenada
-        if (!swapped) {
-            break;
-        }
-    }
 }

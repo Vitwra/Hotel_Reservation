@@ -3,63 +3,96 @@
 #include "../Entities/client.h"
 #include "../Entities/employee.h"
 #include "../Entities/order.h"
+#include "../Entities/room.h"
+#include <time.h>
 
-int main(){
+int main()
+{
+    FILE *orders;
+    FILE *clients;
+    FILE *employees;
+    FILE *rooms;
+    int option;
+    srand(time(NULL));
+
+    if ((employees = fopen("employee.dat", "r+b")) == NULL) // abre para leitura e escrita sem apagar o conteúdo, caso contrário, executa w+b
+    {
+        if ((employees = fopen("employee.dat", "w+b")) == NULL)
+        {
+            printf("Error opening employee file\n");
+            exit(1);
+        }
+    }
+    if ((clients = fopen("client.dat", "r+b")) == NULL)
+    {
+        if ((clients = fopen("client.dat", "w+b")) == NULL)
+        {
+            printf("Error opening client file\n");
+            exit(1);
+        }
+    }
+    if ((orders = fopen("order.dat", "r+b")) == NULL)
+    {
+        if ((orders = fopen("order.dat", "w+b")) == NULL)
+        {
+            printf("Error opening order file\n");
+            exit(1);
+        }
+    }
+    if ((rooms = fopen("room.dat", "r+b")) == NULL)
+    {
+        if ((rooms = fopen("room.dat", "w+b")) == NULL)
+        {
+            printf("Error opening room file\n");
+            exit(1);
+        }
+    }
 
     Employee *e;
     Client *c;
     Order *o;
-    FILE *orders;
-    FILE *clients;
-    FILE *employees;
-    int qntOfRegister = 10;
-    int qntSwap = 0;
+    Room *r;
+    int qntOfRegister;
+    int qntSwap;
     int length;
     int idRegister;
-    int option;
     char reg[15];
+    int idSearch;
+    int idOrder;
 
-    if ((orders = fopen("order.dat", "w+b")) == NULL)
-    {
-        printf("Error to open order archives\n");
-        exit(1);
-    }
-    if ((clients = fopen("client.dat", "w+b")) == NULL)
-    {
-        printf("Error to open order archives\n");
-        exit(1);
-    }
-    if ((employees = fopen("employee.dat", "w+b")) == NULL)
-    {
-        printf("Error to open order archives\n");
-        exit(1);
-    }
- 
     do
     {
-        printf("\n\n>>>>>>>>>>>>>>>>>>>>>>> SYSTEM OF HOTEL RESERVATION <<<<<<<<<<<<<<<<<<<");
-        printf("\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> MENU OPTIONS <<<<<<<<<<<<<<<<<<<<<<<<<\n");
+        printf("\n\n>>>>>>>>>>>>>>>>>>>>>>> HOTEL RESERVATION <<<<<<<<<<<<<<<<<<<");
+        printf("\n\n>>>>>>>>>>>>>>>>>>>>>>>>>> MENU OPTIONS <<<<<<<<<<<<<<<<<<<<\n");
+
+        printf("\n>>>>>>>>>>>>>>>>>>>>>>> Room <<<<<<<<<<<<<<<<<<<\n");
+        printf("\n1 - Create database disordered room");
+        printf("\n2. Register an room");
+        printf("\n3. Search room (Linear)");
+        printf("\n4. Search room (Binary)");
+        printf("\n5. Modify room informations");
+        printf("\n6. Sort room");
 
         printf("\n>>>>>>>>>>>>>>>>>>>>>>> Employee <<<<<<<<<<<<<<<<<<<\n");
-        printf("\n1 - Create database employee disordered");
-        printf("\n2 - Register an employee");
-        printf("\n3 - Search employee (Linear)");
-        printf("\n4 - Search employee (Binary)");
-        printf("\n5 - Sort employees");
+        printf("\n7 - Create database disordered employee");
+        printf("\n8 - Register an employee");
+        printf("\n9 - Search employee (Linear)");
+        printf("\n10 - Search employee (Binary)");
+        printf("\n11 - Sort employees");
 
         printf("\n\n>>>>>>>>>>>>>>>>>>>>>>> Client <<<<<<<<<<<<<<<<<<<\n");
-        printf("\n6 - Create disordered database client");
-        printf("\n7 - Register an client");
-        printf("\n8 - Search client (Linear)");
-        printf("\n9 - Search client (Binary)");
-        printf("\n10 - Sort clients");
+        printf("\n12 - Create disordered database client");
+        printf("\n13 - Register an client");
+        printf("\n14 - Search client (Linear)");
 
         printf("\n\n>>>>>>>>>>>>>>>>>>>>>>> Order <<<<<<<<<<<<<<<<<<<\n");
-        printf("\n11 - Register an order");
-        printf("\n12 - Search an order");
-        printf("\n13 - Gerar relatorio de compras");
+        printf("\n15 - Register an order");
+        printf("\n16 - Search an order");
+        printf("\n17 - Generate a list of orders made");
+        printf("\n18 - Generate a list of orders by employee");
 
-        printf("\n\n0 - Exit");
+        printf("\n\n0 - Exit\n");
+
         printf("\nEnter an option: ");
 
         if (scanf("%d", &option) != 1)
@@ -77,33 +110,122 @@ int main(){
             break;
 
         case 1:
-            printf("\nCreating database disordered...\n");
-            createDisorderedEmployeeDatabase(employees, qntOfRegister, qntSwap);
-            printDataBaseEmployee(employees);
+            printf("\nCreating disordered database room.");
+            rooms = fopen("rooms.dat", "w+b"); // para evitar criar base de dados em uma base ja existente
+            if (rooms == NULL)
+            {
+                printf("\nError reopening rooms.dat\n");
+                exit(1);
+            }
+            printf("\nEnter a quantity of register you want to create: ");
+            scanf("%d", &qntOfRegister);
+            printf("\nEnter a quantity of swaps you want: ");
+            scanf("%d", &qntSwap);
+            createDisorderedRoomDatabase(rooms, qntOfRegister, qntSwap);
+            printDataBaseRoom(rooms);
+            printf("\nQuantity of register: %d", qntOfRegisterRoom(rooms));
             break;
 
         case 2:
+            printf("\nRegistering a new room.\n");
+            printf("\nEnter an room number: \n");
+            scanf("%d", &idRegister);
+            r = linearSearchRoom(idRegister, rooms);
+            if (r == NULL)
+            {
+                r = addRoom(idRegister, "double", 3, 110.00, "Occupied");
+                fseek(rooms, 0, SEEK_END); // para não sobrescrever dados que existam no arquivo
+                saveRoom(r, rooms);
+                printDataBaseRoom(rooms);
+            }
+            else
+            {
+                printf("\nRoom is occupied.");
+            }
+            free(r);
+            break;
+
+        case 3:
+            printf("\nSearching room (Linear).\n");
+            printf("\nEnter number room to search: ");
+            scanf("%d", &idSearch);
+            r = linearSearchRoom(idSearch, rooms);
+            if (r != NULL)
+            {
+                printRoom(r);
+                free(r);
+            }
+            break;
+
+        case 4:
+            printf("\nSearching room (Binary).\n");
+            printf("\nEnter number room to search: ");
+            scanf("%d", &idSearch);
+            length = qntOfRegisterRoom(rooms);
+            r = binarySearchRoom(rooms, idSearch, 0, length - 1);
+            if (r != NULL)
+            {
+                printRoom(r);
+                free(r);
+            }
+            break;
+
+        case 5:
+            printf("\nModifying room informations.\n");
+            changeRoom(rooms);
+            printDataBaseRoom(rooms);
+            break;
+
+        case 6:
+            printf("\nSorting rooms.");
+            length = qntOfRegisterRoom(rooms);
+            bubbleSortRoom(rooms, length);
+            printf("\nDatabase sort:\n");
+            printDataBaseRoom(rooms);
+            break;
+
+        case 7:
+            printf("\nCreating database disordered...\n");
+            employees = fopen("employee.dat", "w+b"); // para evitar criar base de dados em uma base ja existente
+            if (employees == NULL)
+            {
+                printf("Error reopening employee.dat\n");
+                exit(1);
+            }
+            printf("\nEnter a quantity of register you want to create: ");
+            scanf("%d", &qntOfRegister);
+            printf("\nEnter a quantity of swaps you want: ");
+            scanf("%d", &qntSwap);
+            createDisorderedEmployeeDatabase(employees, qntOfRegister, qntSwap);
+            printDataBaseEmployee(employees);
+            printf("\nQuantity of register: %d", qntOfRegisterEmployee(employees));
+            break;
+
+        case 8:
             printf("\nRegistering a new employee.\n");
             printf("\nEnter an ID: \n");
             scanf("%d", &idRegister);
             e = linearSearchEmployee(idRegister, employees);
             if (e == NULL)
             {
-                e = addEmployee(idRegister, "anonimous", "Receptionist");
+                e = addEmployee(idRegister, "anonymous", "Receptionist");
+                fseek(employees, 0, SEEK_END); // para não sobrescrever dados que existam no arquivo
                 saveEmployee(e, employees);
                 printDataBaseEmployee(employees);
             }
             else
             {
-                printf("Employee ID already exists.");
+                printf("\nEmployee ID already exists.");
             }
             free(e);
 
             break;
 
-        case 3:
+        case 9:
             printf("\nSearching employee (Linear).\n");
-            e = linearSearchEmployee(1001, employees);
+            printf("\nEnter an ID to search: ");
+            scanf("%d", &idSearch);
+            e = linearSearchEmployee(idSearch, employees);
             if (e != NULL)
             {
                 printEmployee(e);
@@ -111,10 +233,12 @@ int main(){
             }
             break;
 
-        case 4:
+        case 10:
             printf("\nSearching employee (Binary).\n");
+            printf("\nEnter an ID to search: ");
+            scanf("%d", &idSearch);
             length = qntOfRegisterEmployee(employees);
-            e = binarySearchEmployee(employees, 1000, 0, length - 1);
+            e = binarySearchEmployee(employees, idSearch, 0, length - 1);
             if (e != NULL)
             {
                 printEmployee(e);
@@ -122,23 +246,33 @@ int main(){
             }
             break;
 
-        case 5:
-            printf("\nSorting employees.\n");
+        case 11:
+            printf("\nSorting employees.");
             length = qntOfRegisterEmployee(employees);
             bubbleSortEmployee(employees, length);
-            printf("Database sort:\n");
+            printf("\nDatabase sort:\n");
             printDataBaseEmployee(employees);
             break;
 
-        case 6:
-            printf("\nCreating disordered database client.\n");
+        case 12:
+            printf("\nCreating disordered database client.");
+            clients = fopen("clients.dat", "w+b"); // para evitar criar base de dados em uma base ja existente
+            if (clients == NULL)
+            {
+                printf("\nError reopening clients.dat\n");
+                exit(1);
+            }
+            printf("\nEnter a quantity of register you want to create: ");
+            scanf("%d", &qntOfRegister);
+            printf("\nEnter a quantity of swaps you want: ");
+            scanf("%d", &qntSwap);
             madeDisorderedBaseClient(clients, qntOfRegister, qntSwap);
             printDataBaseClient(clients);
-            printf("Quantity of register: %d", qntOfRegisterClient(clients));
+            printf("\nQuantity of register: %d", qntOfRegisterClient(clients));
             break;
 
-        case 7:
-            printf("\nRegistering a new client.\n");
+        case 13:
+            printf("\nRegistering a new client.");
             printf("\nEnter an CPF: \n");
             scanf("%14s", reg);
             c = linearSearchClient(reg, clients);
@@ -150,16 +284,16 @@ int main(){
             }
             else
             {
-                printf("Client CPF already exists.");
+                printf("\nClient CPF already exists.");
             }
             free(c);
 
             break;
 
-        case 8:
+        case 14:
             printf("\nSearching client (Linear Search).\n");
             char cpfSearch[15];
-            printf("Enter CPF to search: ");
+            printf("\nEnter CPF to search: ");
             scanf("%14s", cpfSearch);
             c = linearSearchClient(cpfSearch, clients);
             if (c != NULL)
@@ -169,104 +303,97 @@ int main(){
             }
             else
             {
-                printf("Client not found.\n");
+                printf("\nClient not found.\n");
             }
             break;
 
-        case 9:
-            printf("\nSearching client (Binary Search).\n");
-            printf("Enter CPF to search: ");
-            scanf("%14s", cpfSearch);
-            c = binarySearchClient(clients, cpfSearch, 0, qntOfRegisterClient(clients) - 1);
-            if (c != NULL)
-            {
-                printClient(c);
-                free(c);
-            }
-            else
-            {
-                printf("Client not found.\n");
-            }
-            break;
+        case 15:
+            printf("\nRegistering new reservation (order)...\n");
 
-        case 10:
-            printf("\nSorting clients.\n");
-            length = qntOfRegisterClient(clients);
-            bubbleSortClient(clients, length);
-            printf("Database sort:\n");
-            printDataBaseClient(clients);
-            break;
-
-        case 11:
-            printf("\nRegister a new order.\n");
-
-            Order *order;
-            int idEmployee;
-            static int idOrder = 0;
-            char cpf[15];
-            int qntOfGuests;
-            int numRoom;
-            char periodOfStay[12];
+            int idEmployee, numRoom, qntOfGuests;
             float price;
+            char cpf[15], periodOfStay[12];
 
-            printf("Employee ID: ");
+            printf("Enter Employee ID: ");
             scanf("%d", &idEmployee);
-            printf("Client CPF: ");
+
+            printf("Enter Client CPF (format 000.000.000-00): ");
             scanf("%14s", cpf);
-            printf("Quantity of Guests: ");
+
+            printf("Enter number of guests: ");
             scanf("%d", &qntOfGuests);
-            printf("Room number: ");
+
+            printf("Enter Room number: ");
             scanf("%d", &numRoom);
-            printf("Period of stay: ");
-            scanf("%12s", periodOfStay);
-            printf("Price: ");
+
+            printf("Enter period of stay (e.g., 3days): ");
+            scanf("%11s", periodOfStay);
+
+            printf("Enter price: ");
             scanf("%f", &price);
 
-            c = linearSearchClient(cpf, clients);
+            // Buscar os dados nos arquivos
             e = linearSearchEmployee(idEmployee, employees);
+            c = linearSearchClient(cpf, clients);
+            r = linearSearchRoom(numRoom, rooms);
 
-            if (c != NULL && e != NULL)
+            if (e != NULL && c != NULL && r != NULL && strcmp(r->status, "Free") == 0)
             {
-                order = addOrder(++idOrder, qntOfGuests, numRoom, periodOfStay, price, idEmployee, cpf);
+                // Gerar novo ID da ordem
+                int idOrder = getLastIDOrder(orders) + 1;
 
-                saveOrder(order, orders);
+                // Criar nova ordem
+                o = addOrder(idOrder, qntOfGuests, numRoom, periodOfStay, price, idEmployee, cpf);
 
-                printf("\nOrder successfully registared!\n");
-                printingOrder(order);
+                // Salvar ordem no arquivo
+                saveOrder(o, orders);
+
+                // Atualizar status do quarto
+                strcpy(r->status, "Occupied");
+
+                // Atualizar quarto no arquivo
+                int totalRooms = qntOfRegisterRoom(rooms);
+                int sizeRoom = lengthOfRegisterRoom();
+
+                for (int i = 0; i < totalRooms; i++)
+                {
+                    fseek(rooms, i * sizeRoom, SEEK_SET);
+                    Room *tmp = readRoom(rooms);
+
+                    if (tmp && tmp->roomNumber == numRoom)
+                    {
+                        fseek(rooms, i * sizeRoom, SEEK_SET);
+                        saveRoom(r, rooms);
+                        free(tmp);
+                        break;
+                    }
+                    free(tmp);
+                }
+
+                printf("\nOrder registered successfully!\n");
+                printingOrder(o);
                 printClient(c);
-                free(order);
+                printRoom(r);
+
+                free(o);
             }
             else
             {
-                printf("\nOrder failed. Verify the informations.\n");
+                printf("\nFailed to register order. Check room availability, employee ID or client CPF.\n");
             }
 
-            free(c);
             free(e);
+            free(c);
+            free(r);
+
             break;
 
-        case 12:
+        case 16:
+
             printf("\nSearching order.\n");
-            o = linearSearchOrder(3, orders);
-            if (o != NULL)
-                printingOrder(o);
-            free(o);
-
-            break;
-
-        case 13:
-            printf("\nGenerating a list of orders made...\n");
-            printingAllOrders(orders);
-            break;
-
-        case 14:
-            printf("\nGenerating order receipt...\n");
-            int idToSearch;
-            printf("Enter order ID to print receipt: ");
-            scanf("%d", &idToSearch);
-
-            o = linearSearchOrder(idToSearch, orders);
-
+            printf("Enter an ID order: ");
+            scanf("%d", &idOrder);
+            o = linearSearchOrder(idOrder, orders);
             if (o != NULL)
             {
                 printingOrder(o);
@@ -274,7 +401,54 @@ int main(){
             }
             else
             {
-                printf("Order not found.\n");
+                printf("ID order not found! Please check your informatiions.");
+            }
+            break;
+
+        case 17:
+            printf("\nGenerating a list of orders made...\n");
+            printingAllOrders(orders);
+            break;
+
+        case 18:
+            printf("\nGenerating report of orders by employee.\n");
+            printf("Enter employee ID: ");
+            scanf("%d", &idSearch);
+
+            rewind(orders);
+            Order *ord;
+            int found = 0;
+
+            e = linearSearchEmployee(idSearch, employees);
+            if (e == NULL)
+            {
+                printf("\nEmployee not found.\n");
+                break;
+            }
+            while ((ord = readOrder(orders)) != NULL)
+            {
+                if (ord->idEmployee == idSearch)
+                {
+                    printingOrder(ord);
+
+                    // Busca e imprime os dados do funcionário responsável
+                    Employee *emp = linearSearchEmployee(ord->idEmployee, employees);
+                    if (emp != NULL)
+                    {
+                        printf("\n--- Employee Responsible ---\n");
+                        printEmployee(emp);
+                        free(emp);
+                    }
+
+                    found = 1;
+                }
+
+                free(ord);
+            }
+
+            if (!found)
+            {
+                printf("\nNo orders found for this employee.\n");
             }
             break;
 
@@ -287,6 +461,7 @@ int main(){
     fclose(employees);
     fclose(orders);
     fclose(clients);
+    fclose(rooms);
 
     return 0;
 }

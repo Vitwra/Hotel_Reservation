@@ -8,8 +8,9 @@ Order *addOrder(int idOrder, int qntOfGuests, int numRoom, const char *periodOfS
 {
     Order *order = (Order *)malloc(sizeof(Order));
 
-    if (order){
-    memset(order, 0, sizeof(Order));
+    if (order)
+    {
+        memset(order, 0, sizeof(Order));
     }
     order->idOrder = idOrder;
     order->numRoom = numRoom;
@@ -21,6 +22,20 @@ Order *addOrder(int idOrder, int qntOfGuests, int numRoom, const char *periodOfS
     strncpy(order->periodOfStay, periodOfStay, sizeof(order->periodOfStay) - 1);
 
     return order;
+}
+
+int getLastIDOrder (FILE *arq){
+    int lastID = 0;
+    Order *o;
+
+    rewind(arq);
+
+    while ((o = readOrder(arq)) != NULL)
+    {
+        lastID = o->idOrder;
+        free(o);
+    }
+    return lastID;
 }
 
 // Salva a compra
@@ -81,15 +96,13 @@ Order *readOrder(FILE *in)
     fread(order->cpfClient, sizeof(char), sizeof(order->cpfClient), in);
     fread(order->periodOfStay, sizeof(char), sizeof(order->periodOfStay), in);
 
-return order;
+    return order;
 }
 
 // Busca sequencial por um ID de uma compra
 Order *linearSearchOrder(int key, FILE *arq)
 {
     Order *o;
-
-    int find = 0;
 
     rewind(arq);
 
@@ -101,7 +114,7 @@ Order *linearSearchOrder(int key, FILE *arq)
         }
         free(o);
     }
-        printf("Order not found\n");
-        free(o);
-        return NULL;
+    printf("Order not found\n");
+    free(o);
+    return NULL;
 }
