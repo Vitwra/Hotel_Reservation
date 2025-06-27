@@ -40,5 +40,6 @@ https://github.com/Vitwra/Hotel_Reservation.git
 ## ✅ Como Executar
 
 ```bash
-gcc main.c cliente.c reserva.c -o sistema
-./sistema
+cd Program
+ gcc main.c ../Entities/client.c ../Entities/order.c ../Entities/employee.c ../Entities/room.c -o programa.exe -Wall
+.\programa.exe
