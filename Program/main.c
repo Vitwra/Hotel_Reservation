@@ -73,24 +73,25 @@ int main()
         printf("\n4. Search room (Binary)");
         printf("\n5. Modify room informations");
         printf("\n6. Sort room");
+        printf("\n7 - Print all room");
 
         printf("\n>>>>>>>>>>>>>>>>>>>>>>> Employee <<<<<<<<<<<<<<<<<<<\n");
-        printf("\n7 - Create database disordered employee");
-        printf("\n8 - Register an employee");
-        printf("\n9 - Search employee (Linear)");
-        printf("\n10 - Search employee (Binary)");
-        printf("\n11 - Sort employees");
+        printf("\n8 - Create database disordered employee");
+        printf("\n9 - Register an employee");
+        printf("\n10 - Search employee (Linear)");
+        printf("\n11 - Search employee (Binary)");
+        printf("\n12 - Sort employees");
 
         printf("\n\n>>>>>>>>>>>>>>>>>>>>>>> Client <<<<<<<<<<<<<<<<<<<\n");
-        printf("\n12 - Create disordered database client");
-        printf("\n13 - Register an client");
-        printf("\n14 - Search client (Linear)");
+        printf("\n13 - Create disordered database client");
+        printf("\n14 - Register an client");
+        printf("\n15 - Search client (Linear)");
 
         printf("\n\n>>>>>>>>>>>>>>>>>>>>>>> Order <<<<<<<<<<<<<<<<<<<\n");
-        printf("\n15 - Register an order");
-        printf("\n16 - Search an order");
-        printf("\n17 - Generate a list of orders made");
-        printf("\n18 - Generate a list of orders by employee");
+        printf("\n16 - Register an order");
+        printf("\n17 - Search an order");
+        printf("\n18 - Generate a list of orders made");
+        printf("\n19 - Generate a list of orders by employee");
 
         printf("\n\n0 - Exit\n");
 
@@ -178,7 +179,7 @@ int main()
             break;
 
         case 6:
-            printf("\nSorting rooms.");
+            printf("\nSorting rooms...");
             length = qntOfRegisterRoom(rooms);
             bubbleSortRoom(rooms, length);
             printf("\nDatabase sort:\n");
@@ -186,6 +187,11 @@ int main()
             break;
 
         case 7:
+            printf("Printing all rooms...");
+            printDataBaseRoom(rooms);
+            break;
+
+        case 8:
             printf("\nCreating database disordered...\n");
             employees = fopen("employee.dat", "w+b"); // para evitar criar base de dados em uma base ja existente
             if (employees == NULL)
@@ -197,12 +203,17 @@ int main()
             scanf("%d", &qntOfRegister);
             printf("\nEnter a quantity of swaps you want: ");
             scanf("%d", &qntSwap);
+            
             createDisorderedEmployeeDatabase(employees, qntOfRegister, qntSwap);
+            
+            linkEmployeeID(employees);
+            
             printDataBaseEmployee(employees);
+            
             printf("\nQuantity of register: %d", qntOfRegisterEmployee(employees));
             break;
 
-        case 8:
+        case 9:
             printf("\nRegistering a new employee.\n");
             printf("\nEnter an ID: \n");
             scanf("%d", &idRegister);
@@ -222,7 +233,7 @@ int main()
 
             break;
 
-        case 9:
+        case 10:
             printf("\nSearching employee (Linear).\n");
             printf("\nEnter an ID to search: ");
             scanf("%d", &idSearch);
@@ -234,7 +245,7 @@ int main()
             }
             break;
 
-        case 10:
+        case 11:
             printf("\nSearching employee (Binary).\n");
             printf("\nEnter an ID to search: ");
             scanf("%d", &idSearch);
@@ -247,15 +258,19 @@ int main()
             }
             break;
 
-        case 11:
+        case 12:
             printf("\nSorting employees.");
             length = qntOfRegisterEmployee(employees);
-            bubbleSortEmployee(employees, length);
+            
+            quickSortEmployee(employees, 0, length -1);
+            
+            linkEmployeeID(employees);
+
             printf("\nDatabase sort:\n");
             printDataBaseEmployee(employees);
             break;
 
-        case 12:
+        case 13:
             printf("\nCreating disordered database client.");
             clients = fopen("clients.dat", "w+b"); // para evitar criar base de dados em uma base ja existente
             if (clients == NULL)
@@ -272,9 +287,9 @@ int main()
             printf("\nQuantity of register: %d", qntOfRegisterClient(clients));
             break;
 
-        case 13:
+        case 14:
             printf("\nRegistering a new client.");
-            printf("\nEnter an CPF: \n");
+            printf("\nEnter an CPF (000.000.000-00): \n");
             scanf("%14s", reg);
             c = linearSearchClient(reg, clients);
             if (c == NULL)
@@ -291,7 +306,7 @@ int main()
 
             break;
 
-        case 14:
+        case 15:
             printf("\nSearching client (Linear Search).\n");
             char cpfSearch[15];
             printf("\nEnter CPF to search: ");
@@ -308,26 +323,26 @@ int main()
             }
             break;
 
-        case 15:
+        case 16:
             printf("\nRegistering new reservation (order)...\n");
 
             int idEmployee, numRoom, qntOfGuests;
             float price;
             char cpf[15], periodOfStay[12];
 
-            printf("Enter Employee ID: ");
+            printf("Employee ID: ");
             scanf("%d", &idEmployee);
 
-            printf("Enter Client CPF (format 000.000.000-00): ");
+            printf("Client CPF (000.000.000-00): ");
             scanf("%14s", cpf);
 
             printf("Enter number of guests: ");
             scanf("%d", &qntOfGuests);
 
-            printf("Enter Room number: ");
+            printf("Room number: ");
             scanf("%d", &numRoom);
 
-            printf("Enter period of stay (e.g., 3days): ");
+            printf("Enter period of stay (days): ");
             scanf("%11s", periodOfStay);
 
             printf("Enter price: ");
@@ -389,7 +404,7 @@ int main()
 
             break;
 
-        case 16:
+        case 17:
 
             printf("\nSearching order.\n");
             printf("Enter an ID order: ");
@@ -406,12 +421,12 @@ int main()
             }
             break;
 
-        case 17:
+        case 18:
             printf("\nGenerating a list of orders made...\n");
             printingAllOrders(orders);
             break;
 
-        case 18:
+        case 19:
             printf("\nGenerating report of orders by employee.\n");
             printf("Enter employee ID: ");
             scanf("%d", &idSearch);

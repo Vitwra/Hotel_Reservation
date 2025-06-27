@@ -113,7 +113,7 @@ void madeDisorderedBaseClient(FILE *arq, int length, int qntSwap) {
         snprintf(cpf, sizeof(cpf), "%03d.%03d.%03d-%02d",
             rand() % 1000, rand() % 1000, rand() % 1000, rand() % 100);
 
-        // Gera telefone (exemplo: "(99)99999-1234")
+        // Gera telefone 
         snprintf(phone, sizeof(phone), "(%02d) %05d-%04d",
             rand() % 100, rand() % 100000, rand() % 10000);
 

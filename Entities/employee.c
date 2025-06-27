@@ -19,7 +19,7 @@ Employee *addEmployee(int id, const char *name, const char *position)
         // Copia valores de string para os campos de employee
         strncpy(employee->name, name, sizeof(employee->name) - 1);
         strncpy(employee->position, position, sizeof(employee->position) - 1);
-        employee->next = -1; //incicializa o prox employee como -1, indicando NULL
+        employee->next = -1; // incicializa o prox employee como -1, indicando NULL
     }
     return employee;
 }
@@ -31,7 +31,7 @@ void saveEmployee(Employee *employee, FILE *arq)
     fwrite(employee->name, sizeof(char), sizeof(employee->name), arq);
     fwrite(employee->position, sizeof(char), sizeof(employee->position), arq);
 
-    //salva nextID como long
+    // salva nextID como long
     long nextID = employee->next;
     fwrite(&nextID, sizeof(long), 1, arq);
 }
@@ -61,18 +61,18 @@ void printEmployee(Employee *employee)
     printf("Name: %s\n", employee->name);
     printf("Position in the company: %s\n", employee->position);
 
-    //imprime valor do prox ponteiro
-    printf("Next employee adress: %ld\n", employee->next);
+    // imprime valor do prox ponteiro
+    printf("Next employee address (offset bytes): %ld\n", employee->next);
     printf("**********************************************\n");
 }
 
 // Retorna o tamanho de employee em bytes
 int lengthOfRegisterEmployee()
 {
-    return sizeof(int)          // id
-           + sizeof(char) * 50  // nome
+    return sizeof(int)         // id
+           + sizeof(char) * 50 // nome
            + sizeof(char) * 40 // cargo
-           + sizeof(long);    //proximo employee
+           + sizeof(long);     // proximo employee
 }
 
 // Retorna a quantidade de registros no arquivo
@@ -142,7 +142,7 @@ void printDataBaseEmployee(FILE *arq)
     while ((e = readEmployee(arq)) != NULL)
     {
         printEmployee(e);
-        free(e); 
+        free(e);
     }
 }
 
@@ -166,7 +166,7 @@ Employee *linearSearchEmployee(int key, FILE *arq)
             printf("\nEmployee found in %f seconds.\n", cpu_time_used);
             return e;
         }
-        free(e); // LIBERAR MEMÓRIA 
+        free(e); // LIBERAR MEMÓRIA
     }
     end_time = clock();                                                 // tempo final
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC; // Calcula o tempo de execução
@@ -212,48 +212,94 @@ Employee *binarySearchEmployee(FILE *arq, int id, int start, int end)
     return NULL;
 }
 
-// Algoritmo Bubble Sort para ordenar a base de dados
-void bubbleSortEmployee(FILE *arq, int length)
+// algortimo quick para ordenar os dados no dat
+void quickSortEmployee(FILE *arq, int low, int high)
 {
-    Employee *currentEmployee = NULL;
-    Employee *nextEmployee = NULL;
-    int swapped;
-
-    for (int i = 0; i < length - 1; i++)
+    if (low < high)
     {
-        swapped = 0;
-        for (int j = 0; j < length - i - 1; j++)
+        // Escolher o pivô como último elemento
+        fseek(arq, high * lengthOfRegisterEmployee(), SEEK_SET);
+        Employee *pivot = readEmployee(arq);
+
+        int i = low - 1;
+
+        for (int j = low; j <= high - 1; j++)
         {
-            // Posiciona o cursor no início do colaborador atual
             fseek(arq, j * lengthOfRegisterEmployee(), SEEK_SET);
-            currentEmployee = readEmployee(arq);
+            Employee *current = readEmployee(arq);
 
-            // Posiciona o cursor no início do próximo colaborador
-            fseek(arq, (j + 1) * lengthOfRegisterEmployee(), SEEK_SET);
-            nextEmployee = readEmployee(arq);
-
-            // Compara os IDs dos colaboradores
-            if (currentEmployee->id > nextEmployee->id)
+            if (current->id <= pivot->id)
             {
-                // Troca os funcionarios de lugar no arquivo
+                i++;
+
+                // Trocar employees nas posições i e j
+                fseek(arq, i * lengthOfRegisterEmployee(), SEEK_SET);
+                Employee *empI = readEmployee(arq);
+
                 fseek(arq, j * lengthOfRegisterEmployee(), SEEK_SET);
-                saveEmployee(nextEmployee, arq);
+                Employee *empJ = readEmployee(arq);
 
-                fseek(arq, (j + 1) * lengthOfRegisterEmployee(), SEEK_SET);
-                saveEmployee(currentEmployee, arq);
+                // Swap
+                fseek(arq, i * lengthOfRegisterEmployee(), SEEK_SET);
+                saveEmployee(empJ, arq);
 
-                swapped = 1;
+                fseek(arq, j * lengthOfRegisterEmployee(), SEEK_SET);
+                saveEmployee(empI, arq);
+
+                free(empI);
+                free(empJ);
             }
-
-            // Libera a memória alocada para os funcionarios
-            free(currentEmployee);
-            free(nextEmployee);
+            free(current);
         }
 
-        // Se nenhuma troca foi feita, a lista já está ordenada
-        if (!swapped)
-        {
-            break;
-        }
+        // Colocar pivô na posição correta (i+1)
+        fseek(arq, (i + 1) * lengthOfRegisterEmployee(), SEEK_SET);
+        Employee *empPivotPos = readEmployee(arq);
+
+        fseek(arq, high * lengthOfRegisterEmployee(), SEEK_SET);
+        Employee *empHigh = readEmployee(arq);
+
+        fseek(arq, (i + 1) * lengthOfRegisterEmployee(), SEEK_SET);
+        saveEmployee(empHigh, arq);
+
+        fseek(arq, high * lengthOfRegisterEmployee(), SEEK_SET);
+        saveEmployee(empPivotPos, arq);
+
+        free(empPivotPos);
+        free(empHigh);
+        free(pivot);
+
+        int pi = i + 1;
+
+        // Recursão para as duas partições
+        quickSortEmployee(arq, low, pi - 1);
+        quickSortEmployee(arq, pi + 1, high);
     }
+}
+
+void linkEmployeeID(FILE *arq)
+{
+    int total = qntOfRegisterEmployee(arq);
+    Employee *current;
+
+    for (int i = 0; i < total - 1; i++)
+    {
+        fseek(arq, i * lengthOfRegisterEmployee(), SEEK_SET);
+        current = readEmployee(arq);
+
+        current->next = (i + 1) * lengthOfRegisterEmployee(); // offset do próximo funcionário
+
+        fseek(arq, i * lengthOfRegisterEmployee(), SEEK_SET);
+        saveEmployee(current, arq);
+
+        free(current);
+    }
+
+    // último aponta para -1
+    fseek(arq, (total - 1) * lengthOfRegisterEmployee(), SEEK_SET);
+    current = readEmployee(arq);
+    current->next = -1;
+    fseek(arq, (total - 1) * lengthOfRegisterEmployee(), SEEK_SET);
+    saveEmployee(current, arq);
+    free(current);
 }

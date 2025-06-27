@@ -88,11 +88,14 @@ void shuffleRoom(int *vet, int max, int swap)
     }
 }
 
-//cria base de dados baseada no numero do quarto
+// cria base de dados baseada no numero do quarto
 void createDisorderedRoomDatabase(FILE *arq, int length, int qntSwap)
 {
     int vet[length];
     Room *r;
+
+    const char *statusOptions[] = {"Occupied", "Free"};
+    int numStatus = sizeof(statusOptions) / sizeof(statusOptions[0]);
 
     for (int i = 0; i < length; i++)
         vet[i] = i + 1;
@@ -103,13 +106,16 @@ void createDisorderedRoomDatabase(FILE *arq, int length, int qntSwap)
 
     for (int i = 0; i < length; i++)
     {
-        r = addRoom(vet[i], "Double", 3, 110.00, "Occupied");
+        const char *randomStatus = statusOptions[rand() % numStatus];
+
+        r = addRoom(vet[i], "Double", 3, 110.00, randomStatus);
         saveRoom(r, arq);
         free(r);
     }
 }
 
-void printDataBaseRoom(FILE *arq) {
+void printDataBaseRoom(FILE *arq)
+{
     printf("Printing database...\n");
 
     rewind(arq);
@@ -127,7 +133,7 @@ Room *linearSearchRoom(int key, FILE *arq)
     clock_t start_time, end_time;
     double cpu_time_used;
 
-    start_time = clock(); 
+    start_time = clock();
 
     rewind(arq);
 
@@ -140,10 +146,10 @@ Room *linearSearchRoom(int key, FILE *arq)
             printf("\nRoom found in %f seconds.\n", cpu_time_used);
             return r;
         }
-        free(r);  
+        free(r);
     }
-    end_time = clock();                                                 
-    cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC; 
+    end_time = clock();
+    cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
     printf("\nRoom not found. Search time: %f seconds.\n", cpu_time_used);
     return NULL;
 }
@@ -210,6 +216,8 @@ void changeRoom(FILE *arq)
     scanf("%d", &r->capacity);
     printf("Base price: ");
     scanf("%f", &r->basePrice);
+    printf("Status: ");
+    scanf("%s", r->status);
 
     // Reposiciona o cursor do arquivo para o início do registro
     long posicao = ftell(arq) - lengthOfRegisterRoom();

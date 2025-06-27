@@ -37,6 +37,8 @@ Employee *linearSearchEmployee(int key, FILE *arq);
 
 Employee *binarySearchEmployee(FILE *arq, int id, int start, int end);
 
-void bubbleSortEmployee(FILE *arq, int length);
+void quickSortEmployee(FILE *arq, int low, int high);
+
+void linkEmployeeID(FILE *arq);
 
 #endif
