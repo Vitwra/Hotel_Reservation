@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../Entities/client.h"
 #include "../Entities/employee.h"
 #include "../Entities/order.h"
@@ -162,7 +163,7 @@ int main()
             printf("\nEnter number room to search: ");
             scanf("%d", &idSearch);
             length = qntOfRegisterRoom(rooms);
-            r = binarySearchRoom(rooms, idSearch, 0, length - 1);
+            r = binarySearchRoom(idSearch, rooms, 0, length - 1);
             if (r != NULL)
             {
                 printRoom(r);

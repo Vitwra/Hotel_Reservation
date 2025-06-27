@@ -212,7 +212,7 @@ void changeRoom(FILE *arq)
     scanf("%f", &r->basePrice);
 
     // Reposiciona o cursor do arquivo para o início do registro
-    long posicao = ftell(arq) - tamanhoRegistroDisco();
+    long posicao = ftell(arq) - lengthOfRegisterRoom();
     fseek(arq, posicao, SEEK_SET);
 
     // Grava o room atualizado no arquivo
