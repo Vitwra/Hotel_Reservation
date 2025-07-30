@@ -60,6 +60,8 @@ int main()
     char reg[15];
     int idSearch;
     int idOrder;
+    int numPartitions;
+    int numMergedPartitions;
 
     do
     {
@@ -81,6 +83,8 @@ int main()
         printf("\n10 - Search employee (Linear)");
         printf("\n11 - Search employee (Binary)");
         printf("\n12 - Sort employees");
+        printf("\n20 - Replecement Selection");
+        printf("\n21 - Optimal Merge");
 
         printf("\n\n>>>>>>>>>>>>>>>>>>>>>>> Client <<<<<<<<<<<<<<<<<<<\n");
         printf("\n13 - Create disordered database client");
@@ -203,13 +207,13 @@ int main()
             scanf("%d", &qntOfRegister);
             printf("\nEnter a quantity of swaps you want: ");
             scanf("%d", &qntSwap);
-            
+
             createDisorderedEmployeeDatabase(employees, qntOfRegister, qntSwap);
-            
+
             linkEmployeeID(employees);
-            
+
             printDataBaseEmployee(employees);
-            
+
             printf("\nQuantity of register: %d", qntOfRegisterEmployee(employees));
             break;
 
@@ -259,16 +263,27 @@ int main()
             break;
 
         case 12:
+        {
             printf("\nSorting employees.");
             length = qntOfRegisterEmployee(employees);
-            
-            quickSortEmployee(employees, 0, length -1);
-            
+
+            clock_t start = clock(); 
+
+            quickSortEmployee(employees, 0, length - 1);
+
+            clock_t end = clock(); 
+            double timeSpent = (double)(end - start) / CLOCKS_PER_SEC;
+
             linkEmployeeID(employees);
 
             printf("\nDatabase sort:\n");
             printDataBaseEmployee(employees);
+
+            // Escreve no log
+            writeLog("log.txt", "Internal quick sort", length, timeSpent, 1); 
+
             break;
+        }
 
         case 13:
             printf("\nCreating disordered database client.");
@@ -468,10 +483,66 @@ int main()
             }
             break;
 
+        case 20:
+        {
+            int m;
+            printf("\nEnter the number of records to load in memory for replacement selection: ");
+            scanf("%d", &m);
+
+            if (m <= 0)
+            {
+                printf("Invalid number. Please enter a positive integer.\n");
+                break;
+            }
+
+            clock_t start = clock();
+            numPartitions = replacementSelection(employees, m);
+            clock_t end = clock();
+
+            double timeSpent = (double)(end - start) / CLOCKS_PER_SEC;
+
+            int numRecords = countEmployees("employee.dat");
+
+            if (numPartitions >= 0)
+            {
+                printf("Number of partitions created: %d\n", numPartitions);
+                writeLog("log.txt", "Replacement selection", numRecords, timeSpent, numPartitions);
+            }
+            else
+            {
+                printf("Error in replacement selection.\n");
+            }
+            break;
+        }
+
+        case 21:
+            if (numPartitions <= 0)
+            {
+                printf("No partitions available to merge. Please generate partitions first.\n");
+            }
+            else
+            {
+                printf("\nOptimal merge of partitions.\n");
+
+                clock_t startMerge = clock();
+                numMergedPartitions = mergePartitions(numPartitions);
+                clock_t endMerge = clock();
+
+                double timeMerge = ((double)(endMerge - startMerge)) / CLOCKS_PER_SEC;
+
+                // Grava log da intercalação ótima
+                int numRecords = countEmployees("employee.dat");
+                writeLog("log.txt", "Optimal merge", numRecords, timeMerge, numMergedPartitions);
+
+                unionPartitions(numMergedPartitions);
+            }
+            break;
+
         default:
             printf("\nInvalid option!\n");
             break;
         }
+
     } while (option != 0);
 
     fclose(employees);

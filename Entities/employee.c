@@ -4,6 +4,8 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#include <stdbool.h>
+#include <limits.h>
 
 // Adiciona novo colaborador
 Employee *addEmployee(int id, const char *name, const char *position)
@@ -287,7 +289,7 @@ void linkEmployeeID(FILE *arq)
         fseek(arq, i * lengthOfRegisterEmployee(), SEEK_SET);
         current = readEmployee(arq);
 
-        current->next = (i + 1) * lengthOfRegisterEmployee(); // offset do próximo funcionário
+        current->next = (i + 1) * lengthOfRegisterEmployee(); // offset/deslocamento do proximo funcionario
 
         fseek(arq, i * lengthOfRegisterEmployee(), SEEK_SET);
         saveEmployee(current, arq);
@@ -302,4 +304,273 @@ void linkEmployeeID(FILE *arq)
     fseek(arq, (total - 1) * lengthOfRegisterEmployee(), SEEK_SET);
     saveEmployee(current, arq);
     free(current);
+}
+
+bool notFrozen(bool frozen[], int length){
+    for (int i = 0; i < length; i++)
+    {
+        if (!frozen[i])
+        {
+            return true;  //existe um registro não congelado válido
+        }
+    }
+    return false;  //todos estão congelados ou nulos
+}
+
+int replacementSelection(FILE *arq, int m) {
+    Employee *copyEmployee[m];
+    bool isFrozen[m];
+    int savedEmployeeId;
+    int minKey;
+    int partitions = 0;
+
+    rewind (arq);
+
+    //ler m registros do arquivo para a memoria
+    for (int i = 0; i < m; i++)
+    {
+        copyEmployee[i] = readEmployee(arq);
+        isFrozen[i] = false;
+    }
+    
+    while (true)
+    {
+        //cria nova partição
+        char namePartition[50];
+        sprintf(namePartition, "partitions/part%d.dat", partitions);
+
+        FILE *partFile = fopen(namePartition, "w+b");
+        if (partFile == NULL)
+        {
+            printf("Error trying to open achive.");
+            return -1;
+        }
+        rewind(partFile);
+
+        while (notFrozen(isFrozen, m))
+        {
+            minKey = -1;  //selecionar registro de menor chave
+            for (int i = 0; i < m; i++)
+            {
+                if (!isFrozen[i] && copyEmployee[i] != NULL && (minKey == -1 || copyEmployee[i]->id < copyEmployee[minKey]->id))
+                {
+                    minKey = i;
+                }
+            }
+            
+            if (minKey != -1)
+            {
+                //gravar registro na partição de saida
+                savedEmployeeId = copyEmployee[minKey]->id;
+                saveEmployee(copyEmployee[minKey], partFile);
+
+                //substituição do registro atual pelo prox do arquivo de entrada
+                copyEmployee[minKey] = readEmployee(arq);
+
+                //congelar se a chave do registro for menor que a salva
+                if (copyEmployee[minKey] == NULL || savedEmployeeId > copyEmployee[minKey]->id)
+                {
+                    isFrozen[minKey] = true;
+                }
+            }
+        }
+
+        //fechar a partição de saida
+        printf("\nPartition %d\n", partitions);
+        printDataBaseEmployee(partFile);
+        fclose(partFile);
+
+        //Descongelar os registros congelados
+        for (int i = 0; i < m; i++)
+        {
+            if (copyEmployee[i] != NULL)
+            {
+                isFrozen[i] = false;
+            }
+        }
+        
+        partitions++;
+
+        //verifica se ainda existe registro no vetor para continuar
+        bool remainingRecords = false;
+        for (int i = 0; i < m; i++)
+        {
+            if (copyEmployee[i] != NULL)
+            {
+                remainingRecords = true;
+                break;
+            }
+        }
+        
+        if (!remainingRecords)
+        {
+            printf("\nFinished!");
+            break;
+        }
+    }
+    
+    return partitions;
+}
+
+int mergePartitions(int totalPartitions)
+{
+    int countMerged = 0;
+    int sizeGroup = 20;
+    int totalMerged = (totalPartitions + sizeGroup - 1) / sizeGroup;
+    char nameArqPartitions[50];
+
+    for (int group = 0; group < totalMerged; group++) {
+        int start = group * sizeGroup;
+        int end = (group + 1) * sizeGroup;
+        if (end > totalPartitions) end = totalPartitions;
+        int currentLengthGroup = end - start;
+
+        FILE *partitions[currentLengthGroup];
+        Employee *copyEmployee[currentLengthGroup];
+
+        // Abrir arquivos e ler o primeiro funcionário de cada
+        for (int i = 0; i < currentLengthGroup; i++) {
+            sprintf(nameArqPartitions, "partitions/part%d.dat", start + i);
+            partitions[i] = fopen(nameArqPartitions, "rb");
+            if (!partitions[i]) {
+                printf("Erro ao abrir partição %d\n", start + i);
+                exit(1);
+            }
+            copyEmployee[i] = readEmployee(partitions[i]);
+        }
+
+        // Cria partição de saída
+        sprintf(nameArqPartitions, "mergePart/partMerged%d.dat", countMerged++);
+        FILE *output = fopen(nameArqPartitions, "w+b");
+        if (!output) {
+            printf("Erro ao criar arquivo de saída\n");
+            exit(1);
+        }
+
+        // Intercala até todos estarem NULL
+        while (1) {
+            int minIdx = -1;
+            for (int i = 0; i < currentLengthGroup; i++) {
+                if (copyEmployee[i] && (minIdx == -1 || copyEmployee[i]->id < copyEmployee[minIdx]->id)) {
+                    minIdx = i;
+                }
+            }
+
+            if (minIdx == -1) break; // todos NULL
+
+            saveEmployee(copyEmployee[minIdx], output);
+            free(copyEmployee[minIdx]);
+            copyEmployee[minIdx] = readEmployee(partitions[minIdx]);
+        }
+
+        // Fechar arquivos do grupo
+        for (int i = 0; i < currentLengthGroup; i++) {
+            fclose(partitions[i]);
+            if (copyEmployee[i]) free(copyEmployee[i]);
+        }
+
+        fclose(output);
+    }
+
+    return countMerged - 1;
+}
+
+void unionPartitions(int numPartitions) {
+    FILE *outputFinal = fopen("mergePart/output_final_sorted.dat", "w+b");
+    if (outputFinal == NULL) {
+        printf("\nError trying to create an final output sorted.\n");
+        exit(1);
+    }
+
+    Employee *copyEmployee[numPartitions];
+    FILE *partitions[numPartitions];
+
+    // Abrir todas as partições
+    for (int i = 0; i < numPartitions; i++) {
+        char nameArqPartition[50];
+        sprintf(nameArqPartition, "mergePart/partMerged%d.dat", i);  // Ajuste: começa em 1 para nome do arquivo
+        partitions[i] = fopen(nameArqPartition, "rb");
+        if (partitions[i] == NULL) {
+            printf("Error trying to open file partition %s\n", nameArqPartition);
+            exit(1);
+        }
+
+        copyEmployee[i] = readEmployee(partitions[i]);  
+    }
+
+    // Processo de merge para unir as partições intercaladas
+    while (1) {
+        int minId = INT_MAX;
+        int idxMin = -1;
+
+        // Encontrar o menor funcionário entre as partições
+        for (int i = 0; i < numPartitions; i++) {
+            if (copyEmployee[i] != NULL && copyEmployee[i]->id < minId) {
+                minId = copyEmployee[i]->id;
+                idxMin = i;
+            }
+        }
+
+        if (idxMin == -1) {
+            // Todos os registros foram unidos
+            break;
+        }
+
+        // Salvar o menor funcionário no arquivo final
+        saveEmployee(copyEmployee[idxMin], outputFinal);
+
+        // Ler o próximo funcionário da partição correspondente
+        copyEmployee[idxMin] = readEmployee(partitions[idxMin]);
+    }
+
+    // Fechar e remover as partições
+    for (int i = 0; i < numPartitions; i++) {
+        fclose(partitions[i]);
+        char nameArqPartition[50];
+        sprintf(nameArqPartition, "mergePart/partMerged%d.dat", i);  
+        remove(nameArqPartition);  
+    }
+
+    fclose(outputFinal);
+
+    // Abrir o arquivo final ordenado para impressão
+    FILE *outputFinalSorted = fopen("mergePart/output_final_sorted.dat", "rb");
+    if (outputFinalSorted == NULL) {
+        printf("\nError trying to open output file sorted for print.\n");
+        exit(1);
+    }
+
+    // Imprimir o conteúdo do arquivo final ordenado
+    printf("\nOUTPUT SORTED\n");
+    printDataBaseEmployee(outputFinalSorted);
+
+    fclose(outputFinalSorted);
+}
+
+void writeLog(const char *filename, const char *operation, int nRecords, double time, int partitions) {
+    FILE *log = fopen(filename, "a"); // "a" para adicionar sem apagar o conteúdo anterior
+    if (log == NULL) {
+        printf("Erro ao abrir log.\n");
+        return;
+    }
+
+    fprintf(log, "Operação: %s\n", operation);
+    fprintf(log, "Registros: %d\n", nRecords);
+    fprintf(log, "Tempo: %.4lf segundos\n", time);
+    fprintf(log, "Partições: %d\n", partitions);
+    fprintf(log, "--------------------------\n");
+
+    fclose(log);
+}
+
+int countEmployees(const char *filename)
+{
+    FILE *fp = fopen(filename, "rb");
+    if (!fp) return 0;
+
+    fseek(fp, 0, SEEK_END);
+    long size = ftell(fp);
+    fclose(fp);
+
+    return size / sizeof(Employee);
 }

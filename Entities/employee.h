@@ -1,15 +1,16 @@
 #ifndef EMPLOYEE_H
 #define EMPLOYEE_H
-
+#define MAX_PARTITIONS 200
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 typedef struct Employee 
 {
     int id;
     char name[50];
     char position[40];
-    long next;  //ponteiro para o proximo employee
+    long next;  //ponteiro para o proximo registro de employee
 } Employee;
 
 //Principais
@@ -40,5 +41,17 @@ Employee *binarySearchEmployee(FILE *arq, int id, int start, int end);
 void quickSortEmployee(FILE *arq, int low, int high);
 
 void linkEmployeeID(FILE *arq);
+
+void unionPartitions(int numPartitions);
+
+int mergePartitions(int numPartitions);
+
+int replacementSelection(FILE *arq, int m);
+
+bool notFrozen(bool frozen[], int length);
+
+void writeLog(const char *filename, const char *operation, int nRecords, double time, int partitions);
+
+int countEmployees(const char *filename);
 
 #endif
