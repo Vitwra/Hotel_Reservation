@@ -44,7 +44,7 @@ void linkEmployeeID(FILE *arq);
 
 void unionPartitions(int numPartitions);
 
-int mergePartitions(int numPartitions);
+int interleavePartitions(int numPartitions);
 
 int replacementSelection(FILE *arq, int m);
 

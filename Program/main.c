@@ -267,11 +267,11 @@ int main()
             printf("\nSorting employees.");
             length = qntOfRegisterEmployee(employees);
 
-            clock_t start = clock(); 
+            clock_t start = clock();
 
             quickSortEmployee(employees, 0, length - 1);
 
-            clock_t end = clock(); 
+            clock_t end = clock();
             double timeSpent = (double)(end - start) / CLOCKS_PER_SEC;
 
             linkEmployeeID(employees);
@@ -280,7 +280,7 @@ int main()
             printDataBaseEmployee(employees);
 
             // Escreve no log
-            writeLog("log.txt", "Internal quick sort", length, timeSpent, 1); 
+            writeLog("log.txt", "Internal quick sort", length, timeSpent, 1);
 
             break;
         }
@@ -518,14 +518,14 @@ int main()
         case 21:
             if (numPartitions <= 0)
             {
-                printf("No partitions available to merge. Please generate partitions first.\n");
+                printf("\nNo partitions available to merge. Please generate partitions first.\n");
             }
             else
             {
                 printf("\nOptimal merge of partitions.\n");
 
                 clock_t startMerge = clock();
-                numMergedPartitions = mergePartitions(numPartitions);
+                numMergedPartitions = interleavePartitions(numPartitions);
                 clock_t endMerge = clock();
 
                 double timeMerge = ((double)(endMerge - startMerge)) / CLOCKS_PER_SEC;
