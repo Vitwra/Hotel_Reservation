@@ -54,4 +54,18 @@ void writeLog(const char *filename, const char *operation, int nRecords, double 
 
 int countEmployees(const char *filename);
 
+void printHashTable(int m);
+
+void deleteHash(int id, int length, FILE *arqEmployee);
+
+void insertHash(int m, FILE *arq);
+
+Employee *searchHash(int id, int length, FILE *arqEmployee);
+
+void hashInitialize(int m);
+
+void saveEmployeeInPosition(FILE *arq, Employee *e, long position);
+
+Employee *readEmployeeInPosition(FILE *arq, long position);
+
 #endif

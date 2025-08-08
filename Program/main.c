@@ -62,6 +62,7 @@ int main()
     int idOrder;
     int numPartitions;
     int numMergedPartitions;
+    int qntHash;
 
     do
     {
@@ -83,8 +84,6 @@ int main()
         printf("\n10 - Search employee (Linear)");
         printf("\n11 - Search employee (Binary)");
         printf("\n12 - Sort employees");
-        printf("\n20 - Replecement Selection");
-        printf("\n21 - Optimal Merge");
 
         printf("\n\n>>>>>>>>>>>>>>>>>>>>>>> Client <<<<<<<<<<<<<<<<<<<\n");
         printf("\n13 - Create disordered database client");
@@ -96,6 +95,16 @@ int main()
         printf("\n17 - Search an order");
         printf("\n18 - Generate a list of orders made");
         printf("\n19 - Generate a list of orders by employee");
+
+        printf("\n\n>>>>>>>>>>>>>>>>>>>>>>> Partitions <<<<<<<<<<<<<<<<<<<\n");
+        printf("\n20 - Replecement Selection");
+        printf("\n21 - Optimal Merge");
+
+        printf("\n\n>>>>>>>>>>>>>>>>>>>>>>> Hash Table <<<<<<<<<<<<<<<<<<<\n");
+        printf("\n22 - Initialize and insert");
+        printf("\n23 - Search employee by ID");
+        printf("\n24 - Delete employee by ID");
+        printf("\n25 - Print hash table");
 
         printf("\n\n0 - Exit\n");
 
@@ -536,6 +545,76 @@ int main()
 
                 unionPartitions(numMergedPartitions);
             }
+            break;
+
+        case 22:
+            printf("Enter quantity of hash table to create: ");
+            scanf("%d", &qntHash);
+            hashInitialize(qntHash);
+
+            FILE *employees = fopen("employee.dat", "rb");
+            if (employees == NULL)
+            {
+                printf("Error opening employee data file.\n");
+                break;
+            }
+
+            insertHash(qntHash, employees);
+
+            fclose(employees);
+            break;
+
+        case 23:
+        {
+            int searchID;
+            printf("Enter employee ID to search: ");
+            scanf("%d", &searchID);
+
+            FILE *arqEmployee = fopen("employee.dat", "rb");
+            if (arqEmployee == NULL)
+            {
+                printf("Error opening employee data file.\n");
+                break;
+            }
+
+            Employee *found = searchHash(searchID, qntHash, arqEmployee);
+
+            if (found != NULL)
+            {
+                printf("Employee details:\n");
+                printEmployee(found);
+                free(found);
+            }
+            else
+            {
+                printf("Employee with ID %d not found.\n", searchID);
+            }
+
+            fclose(arqEmployee);
+            break;
+        }
+
+        case 24:
+        {
+            int delID;
+            printf("Enter employee ID to delete: ");
+            scanf("%d", &delID);
+
+            FILE *arqEmployee = fopen("employee.dat", "r+b"); // precisa modo leitura e escrita
+            if (arqEmployee == NULL)
+            {
+                printf("Error opening employee data file.\n");
+                break;
+            }
+
+            deleteHash(delID, qntHash, arqEmployee);
+
+            fclose(arqEmployee);
+            break;
+        }
+
+        case 25:
+            printHashTable(qntHash);
             break;
 
         default:
