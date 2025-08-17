@@ -760,20 +760,11 @@ Employee *searchHash(int id, int length, FILE *arqEmployee)
         return e;
     }
 
-    // verifica se o funcionario existe e faz aux receber o campo next de employee
-    if (e != NULL && e->id == id)
+    // verifica se o funcionario existe mas tem ID diferente (colisão)
+    if (e != NULL && e->id != id)
     {
-        printEmployee(e);
+        printf("Collision detected. Searching in linked list...\n");
         aux = e->next;
-
-        if (aux == -1)
-        {
-            return e;
-        }
-
-        // Se o ID não bater, continuar a busca nos próximos elementos
-
-        // free(f);  // Liberar a memória alocada para o funcionário inicial
 
         // while para realizar a busca ate encontrar o ID desejado ou até que o fim da lista seja alcaçado
         while (aux != -1)
@@ -782,7 +773,7 @@ Employee *searchHash(int id, int length, FILE *arqEmployee)
             employeeAux = readEmployeeInPosition(arqEmployee, aux);
 
             // verifica se o arq esta vazio
-            if (hashTable == NULL)
+            if (employeeAux == NULL)
             {
                 printf("\nError trying to read employee in position %ld.\n\n Exiting search...\n", aux);
                 fclose(hashTable);
@@ -805,7 +796,11 @@ Employee *searchHash(int id, int length, FILE *arqEmployee)
             aux = employeeAux->next;
             free(employeeAux);
         }
-        return e;
+        
+        // Se chegou aqui, não encontrou o funcionário na lista encadeada
+        printf("Employee with ID %d not found in linked list.\n", id);
+        fclose(hashTable);
+        return NULL;
     }
 
     // se não encontrar o funcionario
@@ -933,7 +928,6 @@ void deleteHash(int id, int length, FILE *arqEmployee)
     long positionEmployeeArq;
     long positionHash = hash(id, length);
     Employee *e = NULL;
-    Employee *anterior = NULL;
 
     // cria arq e verifica de esta vazio
     FILE *hashTable = fopen("hashTable.dat", "r+b");
@@ -980,17 +974,22 @@ void deleteHash(int id, int length, FILE *arqEmployee)
     else
     {
         // se não for o primeiro, buscar o elemento na lista encadeada
-        long anteriorPosition = -1;
-        while (e != NULL && e->id == id)
+        long currentPosition = positionEmployeeArq;
+        long anteriorPosition = positionEmployeeArq;
+        Employee *anterior = e;
+        
+        // Procura o funcionário na lista encadeada
+        while (e != NULL && e->id != id)
         {
-            anteriorPosition = ftell(arqEmployee); // armazena a posição atual do anterior
+            anteriorPosition = currentPosition;
             anterior = e;
+            currentPosition = e->next;
             e = readEmployeeInPosition(arqEmployee, e->next);
         }
 
         if (e == NULL)
         {
-            printf("\nId employee %d not found.\n", id);
+            printf("\nId employee %d not found in the linked list.\n", id);
             fclose(hashTable);
             return;
         }
@@ -998,9 +997,9 @@ void deleteHash(int id, int length, FILE *arqEmployee)
         // encontrou o funcionario, ajusta a lista
         anterior->next = e->next;
 
-        // salva as alterações anteriores no arquivo
+        // salva as alterações do funcionário anterior no arquivo
         saveEmployeeInPosition(arqEmployee, anterior, anteriorPosition);
-        printf("\nId employee %d remove from the list.\n", id);
+        printf("\nId employee %d removed from the linked list.\n", id);
     }
 
     free(e);
