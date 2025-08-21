@@ -1,0 +1,47 @@
+==========================================
+ESTRUTURA DA TABELA HASH - FUNCIONÁRIOS
+==========================================
+
+Data/Hora: Thu Aug 21 16:43:56 2025
+Tamanho da tabela hash: 3 gavetas
+
+DETALHAMENTO DAS GAVETAS E LISTAS ENCADEADAS:
+=============================================
+
+GAVETA 1:
+---------
+Status: OCUPADA
+Posição inicial no arquivo: 686
+Lista encadeada:
+  1. ID: 9 | Nome: anonymous | Cargo: Concierge | Próximo: 294
+  2. ID: 3 | Nome: anonymous | Cargo: Receptionist | Próximo: 0
+  3. ID: 6 | Nome: anonymous | Cargo: Concierge | Próximo: -1
+  Total de funcionários nesta gaveta: 3
+
+GAVETA 2:
+---------
+Status: OCUPADA
+Posição inicial no arquivo: 490
+Lista encadeada:
+  1. ID: 4 | Nome: anonymous | Cargo: Receptionist | Próximo: 392
+  2. ID: 7 | Nome: anonymous | Cargo: Concierge | Próximo: 196
+  3. ID: 10 | Nome: anonymous | Cargo: Receptionist | Próximo: -1
+  Total de funcionários nesta gaveta: 3
+
+GAVETA 3:
+---------
+Status: OCUPADA
+Posição inicial no arquivo: 882
+Lista encadeada:
+  1. ID: 5 | Nome: anonymous | Cargo: Receptionist | Próximo: 784
+  2. ID: 2 | Nome: anonymous | Cargo: Receptionist | Próximo: 98
+  3. ID: 8 | Nome: anonymous | Cargo: Concierge | Próximo: -1
+  Total de funcionários nesta gaveta: 3
+
+==========================================
+ESTATÍSTICAS DA TABELA HASH
+==========================================
+
+Gavetas vazias: 0
+Gavetas ocupadas: 3
+Taxa de ocupação: 100.00%

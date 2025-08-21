@@ -56,6 +56,10 @@ int countEmployees(const char *filename);
 
 void printHashTable(int m);
 
+void createHashTableTxt(int m);
+
+void debugHashTable(int m, FILE *arq);
+
 void deleteHash(int id, int length, FILE *arqEmployee);
 
 void insertHash(int m, FILE *arq);
@@ -63,6 +67,8 @@ void insertHash(int m, FILE *arq);
 Employee *searchHash(int id, int length, FILE *arqEmployee);
 
 void hashInitialize(int m);
+
+void cleanEmployeeNextFields();
 
 void saveEmployeeInPosition(FILE *arq, Employee *e, long position);
 

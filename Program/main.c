@@ -219,8 +219,6 @@ int main()
 
             createDisorderedEmployeeDatabase(employees, qntOfRegister, qntSwap);
 
-            linkEmployeeID(employees);
-
             printDataBaseEmployee(employees);
 
             printf("\nQuantity of register: %d", qntOfRegisterEmployee(employees));
@@ -282,8 +280,6 @@ int main()
 
             clock_t end = clock();
             double timeSpent = (double)(end - start) / CLOCKS_PER_SEC;
-
-            linkEmployeeID(employees);
 
             printf("\nDatabase sort:\n");
             printDataBaseEmployee(employees);
@@ -552,16 +548,16 @@ int main()
             scanf("%d", &qntHash);
             hashInitialize(qntHash);
 
-            FILE *employees = fopen("employee.dat", "rb");
-            if (employees == NULL)
+            FILE *employeesHash = fopen("employee.dat", "r+b");
+            if (employeesHash == NULL)
             {
                 printf("Error opening employee data file.\n");
                 break;
             }
 
-            insertHash(qntHash, employees);
+            insertHash(qntHash, employeesHash);
 
-            fclose(employees);
+            fclose(employeesHash);
             break;
 
         case 23:

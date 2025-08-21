@@ -675,20 +675,18 @@ void saveEmployeeInPosition(FILE *arq, Employee *e, long position)
     fflush(arq);
 
     // mensagem para mostrar ao usuario que a operação foi bem sucessida
-    printf("Successfuly! register has been change in position %ld! \n", position);
+    printf("Successfully! Register has been changed in position %ld! \n", position);
 }
 
 // função para criar tabela hash
 int hash(int id, int length)
 {
-
     return id % length;
 }
 
-// função para incializar função hash
+// função para inicializar função hash
 void hashInitialize(int m)
 {
-
     // abre o arquivo para leitura
     FILE *table = fopen("hashTable.dat", "w+b");
     if (table == NULL)
@@ -708,27 +706,61 @@ void hashInitialize(int m)
     }
 
     fclose(table);
+    
+    // IMPORTANTE: Limpar todos os campos 'next' dos funcionários
+    cleanEmployeeNextFields();
 }
 
-// função para buscar um fncionario na tabela hash
+// função para limpar todos os campos 'next' dos funcionários
+void cleanEmployeeNextFields()
+{
+    FILE *arq = fopen("employee.dat", "r+b");
+    if (arq == NULL)
+    {
+        printf("Error opening employee.dat for cleaning.\n");
+        return;
+    }
+    
+    Employee *e = NULL;
+    long position = 0;
+    
+    printf("\n=== CLEANING EMPLOYEE 'NEXT' FIELDS ===\n");
+    
+    rewind(arq);
+    while ((e = readEmployee(arq)) != NULL)
+    {
+        position = ftell(arq) - lengthOfRegisterEmployee();
+        
+        // Zerar o campo next
+        e->next = -1;
+        
+        // Salvar o funcionário com next zerado
+        saveEmployeeInPosition(arq, e, position);
+        
+        printf("Employee ID %d: 'next' field cleared\n", e->id);
+        
+        free(e);
+    }
+    
+    fclose(arq);
+    printf("=== CLEANUP COMPLETED ===\n\n");
+}
+
+// função para buscar um funcionario na tabela hash
 Employee *searchHash(int id, int length, FILE *arqEmployee)
 {
+    FILE *hashTable = fopen("hashTable.dat", "r+b");
+    if (hashTable == NULL)
+    {
+        printf("Error trying to open file Hash Table.");
+        return NULL;
+    }
 
     long positionEmployeeArq;
     long positionHash;
     Employee *e = NULL;
     Employee *employeeAux = NULL;
     long aux;
-
-    // cria arquivo
-    FILE *hashTable = fopen("hashTable.dat", "r+b");
-
-    // verifica se o arq esta vazio
-    if (hashTable == NULL)
-    {
-        printf("Error trying to open file Hash Table.");
-        return NULL;
-    }
 
     // calcula a posição inicial na tabela hash
     positionHash = hash(id, length);
@@ -745,7 +777,7 @@ Employee *searchHash(int id, int length, FILE *arqEmployee)
         return NULL;
     }
 
-    // retorna para o usuario a posição inical do arquivo
+    // retorna para o usuario a posição inicial do arquivo
     printf("\nInitial position in the file: %ld\n", positionEmployeeArq);
 
     // leitura do registro na posição indicada
@@ -766,7 +798,7 @@ Employee *searchHash(int id, int length, FILE *arqEmployee)
         printf("Collision detected. Searching in linked list...\n");
         aux = e->next;
 
-        // while para realizar a busca ate encontrar o ID desejado ou até que o fim da lista seja alcaçado
+        // while para realizar a busca ate encontrar o ID desejado ou até que o fim da lista seja alcançado
         while (aux != -1)
         {
             // leitura do arq EmployeeAux
@@ -777,11 +809,12 @@ Employee *searchHash(int id, int length, FILE *arqEmployee)
             {
                 printf("\nError trying to read employee in position %ld.\n\n Exiting search...\n", aux);
                 fclose(hashTable);
+                free(e);
                 return NULL;
             }
 
             // imprimindo registro do funcionario
-            printf("Searching employee in position: %ld\n", aux);
+            printf("Searching employee at position: %ld\n", aux);
             printEmployee(employeeAux);
 
             // encontrou o funcionario com o ID desejado
@@ -789,6 +822,7 @@ Employee *searchHash(int id, int length, FILE *arqEmployee)
             {
                 printf("Employee id %d found!\n", id);
                 fclose(hashTable);
+                free(e);
                 return employeeAux;
             }
 
@@ -800,6 +834,7 @@ Employee *searchHash(int id, int length, FILE *arqEmployee)
         // Se chegou aqui, não encontrou o funcionário na lista encadeada
         printf("Employee with ID %d not found in linked list.\n", id);
         fclose(hashTable);
+        free(e);
         return NULL;
     }
 
@@ -809,134 +844,112 @@ Employee *searchHash(int id, int length, FILE *arqEmployee)
     return NULL;
 }
 
-// função para inserir na tabela hash
+// função para inserir na tabela hash (versão simplificada e funcional)
 void insertHash(int m, FILE *arq)
 {
     Employee *e = NULL;
-    Employee *eSearch = NULL;
-    Employee *employeeAux = NULL;
     long positionEmployeeArq;
     int positionHash;
-    long aux;
 
-    // cria arq tabela
     FILE *table = fopen("hashTable.dat", "r+b");
-
-    // verifica se o arq é vazio
     if (table == NULL)
     {
         printf("\nError trying to open hashTable.\n");
         exit(1);
     }
 
-    // volta para o inicio de funcionarios
     rewind(arq);
 
-    // verifica se o registro atual não é vazio e então imprime, calcula e busca na tabela
-    while ((e = readEmployee(arq)) != NULL)
+    printf("\n=== STARTING HASH TABLE INSERTION ===\n");
+
+    long currentPosition = 0;
+    int processedCount = 0;
+    int maxRecords = 1000; // Proteção contra loop infinito
+    int lastId = -1; // Para detectar se está lendo o mesmo registro
+    
+    while ((e = readEmployee(arq)) != NULL && processedCount < maxRecords)
     {
-        positionEmployeeArq = ftell(arq) - lengthOfRegisterEmployee();
+        positionEmployeeArq = currentPosition;
         int employeeId = e->id;
-        printf("\nID employee: %d, position in the file: %ld\n", employeeId, positionEmployeeArq);
+        
+        // Verificar se está lendo o mesmo registro repetidamente
+        if (employeeId == lastId)
+        {
+            printf("❌ ERRO: Lendo o mesmo registro ID=%d repetidamente! Interrompendo...\n", employeeId);
+            free(e);
+            break;
+        }
+        lastId = employeeId;
+        
+        printf("\n--- Processing ID: %d ---\n", employeeId);
 
         // calcula a posição na hash
         positionHash = hash(employeeId, m);
-        printf("\nPosition hash for ID %d: %d\n", employeeId, positionHash);
+        printf("Hash(ID=%d, m=%d) = %d (Gaveta %d)\n", employeeId, m, positionHash, positionHash + 1);
 
-        // busca na tabela hash se o ID esta presente
-        eSearch = searchHash(employeeId, m, arq);
-
-        // verifica se existe e grava na tabela
-        if (eSearch == NULL)
+        // Verificar se a gaveta está vazia
+        fseek(table, positionHash * sizeof(long), SEEK_SET);
+        long hashPosition;
+        fread(&hashPosition, sizeof(long), 1, table);
+        
+        if (hashPosition == -1)
         {
+            // Gaveta vazia - inserir diretamente
             fseek(table, positionHash * sizeof(long), SEEK_SET);
             fwrite(&positionEmployeeArq, sizeof(long), 1, table);
             fflush(table);
-            printf("\nSave in position %d complete.\n\n", positionHash);
+            printf("✓ Inserted directly in bucket %d (position %ld)\n", positionHash + 1, positionEmployeeArq);
         }
-        
-        //operação que verifica se já existe um funcionário com esse ID na tabela hash
         else
         {
-            printf("\nId employee %d already exist in hash table.\n", employeeId);
-            printf("Inserindo na lista encadeada...\n");
-
-            if (eSearch->id != employeeId)
-            {
-                // inserir na lista encadeada se ja existir um funcionario com ID diferente
-                aux = eSearch->next;
-
-                // caso seja -1, significa que é o final da lista
-                if (aux == -1)
-                {
-                    eSearch->next = positionEmployeeArq;
-                    saveEmployeeInPosition(arq, eSearch, ftell(arq) - lengthOfRegisterEmployee());
-                    printf("\nInserindo na lista encadeada na posicao: %ld\n", eSearch->next);
-                }
-                else
-                {
-                    // percorre a lista ate encontrar o final
-                    while (aux != -1)
-                    {
-                        employeeAux = readEmployeeInPosition(arq, aux);
-
-                        if (employeeAux == NULL)
-                        {
-                            printf("\nError trying to read employee in position %ld. \nExiting...", aux);
-                            break;
-                        }
-
-                        // atualiza aux para o proximo employee na lista
-                        aux = employeeAux->next;
-
-                        // libera a memoria anterior para evitar vazamento
-                        if (aux != -1)
-                        {
-                            free(employeeAux);
-                        }
-                    }
-
-                    //caso o employeeAux é o ultimo
-                    if (employeeAux != NULL)
-                    {
-                        // inserir ao final da lista encadeada
-                        employeeAux->next = positionEmployeeArq;
-
-                        // salva o ultimo funcionario atualizado na sua posição original
-                        saveEmployeeInPosition(arq, employeeAux, ftell(arq) - lengthOfRegisterEmployee());
-                        printf("Inserido na lista encadeada na posição: %ld\n", employeeAux->next);
-
-                        // libera memoria para employeeAux
-                        free(employeeAux);
-                    }
-                }
-            }
+            // Gaveta ocupada - inserir no final da lista encadeada
+            printf("⚠ Collision detected! Inserting in linked list...\n");
+            
+            // Estratégia mais simples: inserir no início da lista (mais rápido e seguro)
+            Employee *firstEmployee = readEmployeeInPosition(arq, hashPosition);
+            
+            // Atualizar a tabela hash para apontar para o novo funcionário
+            fseek(table, positionHash * sizeof(long), SEEK_SET);
+            fwrite(&positionEmployeeArq, sizeof(long), 1, table);
+            fflush(table);
+            
+            // Fazer o novo funcionário apontar para o primeiro da lista
+            e->next = hashPosition;
+            saveEmployeeInPosition(arq, e, positionEmployeeArq);
+            
+            printf("✓ Inserted at the beginning of linked list in bucket %d (position %ld)\n", positionHash + 1, positionEmployeeArq);
+            free(firstEmployee);
         }
+        
+        // Avançar para o próximo registro
+        currentPosition += lengthOfRegisterEmployee();
+        processedCount++;
+        free(e);
+    }
+    
+    if (processedCount >= maxRecords)
+    {
+        printf("❌ AVISO: Processamento interrompido após %d registros (possível loop infinito)\n", maxRecords);
     }
 
-    // libera arq
-    free(e);
-    free(eSearch);
-
+    printf("\n=== INSERTION COMPLETED ===\n");
     fclose(table);
 }
 
 // função para excluir hash
 void deleteHash(int id, int length, FILE *arqEmployee)
 {
-
-    long positionEmployeeArq;
-    long positionHash = hash(id, length);
-    Employee *e = NULL;
-
-    // cria arq e verifica de esta vazio
     FILE *hashTable = fopen("hashTable.dat", "r+b");
-
     if (hashTable == NULL)
     {
         printf("Error trying to open hashTable.dat.\n");
         exit(1);
     }
+
+    long positionEmployeeArq;
+    long positionHash = hash(id, length);
+    Employee *e = NULL;
+    Employee *anterior = NULL;
 
     // ler a posição do funcionario na tabela hash
     fseek(hashTable, positionHash * sizeof(long), SEEK_SET);
@@ -976,7 +989,7 @@ void deleteHash(int id, int length, FILE *arqEmployee)
         // se não for o primeiro, buscar o elemento na lista encadeada
         long currentPosition = positionEmployeeArq;
         long anteriorPosition = positionEmployeeArq;
-        Employee *anterior = e;
+        anterior = e;
         
         // Procura o funcionário na lista encadeada
         while (e != NULL && e->id != id)
@@ -1006,11 +1019,38 @@ void deleteHash(int id, int length, FILE *arqEmployee)
     fclose(hashTable);
 }
 
+// função para debug - verificar estado da tabela hash
+void debugHashTable(int m, FILE *arq)
+{
+    long position;
+    printf("\n=== DEBUG: CURRENT HASH TABLE STATUS ===\n");
+    
+    FILE *table = fopen("hashTable.dat", "r+b");
+    if (table == NULL)
+    {
+        printf("Error opening hashTable.dat for debug.\n");
+        return;
+    }
+    
+    for (int i = 0; i < m; i++)
+    {
+        fseek(table, i * sizeof(long), SEEK_SET);
+        fread(&position, sizeof(long), 1, table);
+        printf("Bucket %d: position %ld\n", i + 1, position);
+    }
+    fclose(table);
+    printf("=== END DEBUG ===\n\n");
+}
+
 // função para imprimir a tabela hash
 void printHashTable(int m)
 {
-
     long position;
+    Employee *e = NULL;
+    Employee *employeeAux = NULL;
+    long aux;
+    int count = 0;
+    int gavetasVazias = 0, gavetasOcupadas = 0;
 
     // abre arq da tabela hash
     FILE *table = fopen("hashTable.dat", "r+b");
@@ -1020,7 +1060,23 @@ void printHashTable(int m)
         exit(1);
     }
 
-    printf("\nHash table:\n");
+    // abre arquivo de funcionários
+    FILE *arqEmployee = fopen("employee.dat", "r+b");
+    if (arqEmployee == NULL)
+    {
+        printf("Error trying to open employee.dat para leitura.\n");
+        fclose(table);
+        return;
+    }
+
+    printf("\n==========================================\n");
+    printf("HASH TABLE STRUCTURE - EMPLOYEES\n");
+    printf("==========================================\n");
+    printf("Hash table size: %d buckets\n\n", m);
+
+    printf("DETAILED BUCKETS AND LINKED LISTS:\n");
+    printf("==================================\n\n");
+
     for (int i = 0; i < m; i++)
     {
         // Move o ponteiro do arquivo para a posição correspondente no arq
@@ -1029,17 +1085,234 @@ void printHashTable(int m)
         // Le o valor da posição (offset) do funcionario
         fread(&position, sizeof(long), 1, table);
 
-        // Exibir a posição e o valor
-        printf("indice %d: ", i + 1);
+        printf("BUCKET %d:\n", i + 1);
+        printf("---------\n");
+
         if (position == -1)
         {
-            printf("No register\n");
+            printf("Status: EMPTY\n");
+            printf("Linked list: No employees\n");
+            gavetasVazias++;
         }
         else
         {
-            printf("Employee position: %ld\n", position);
+            printf("Status: OCCUPIED\n");
+            printf("Initial position in file: %ld\n", position);
+            printf("Linked list:\n");
+
+            // Lê o primeiro funcionário da gaveta
+            e = readEmployeeInPosition(arqEmployee, position);
+            if (e != NULL)
+            {
+                count = 1;
+                printf("  %d. ID: %d | Name: %s | Position: %s | Next: %ld\n", 
+                       count, e->id, e->name, e->position, e->next);
+
+                // Percorre APENAS os funcionários da mesma gaveta
+                aux = e->next;
+                while (aux != -1)
+                {
+                    employeeAux = readEmployeeInPosition(arqEmployee, aux);
+                    if (employeeAux == NULL)
+                    {
+                        printf("  ERROR: Could not read employee at position %ld\n", aux);
+                        break;
+                    }
+
+                    // VERIFICAÇÃO CRÍTICA: Verificar se o funcionário pertence à mesma gaveta
+                    int employeeHash = hash(employeeAux->id, m);
+                    if (employeeHash != i)
+                    {
+                                            printf("  ERROR: Employee ID %d does not belong to bucket %d (hash=%d)\n", 
+                           employeeAux->id, i + 1, employeeHash + 1);
+                        free(employeeAux);
+                        break;
+                    }
+
+                    count++;
+                    printf("  %d. ID: %d | Name: %s | Position: %s | Next: %ld\n", 
+                           count, employeeAux->id, employeeAux->name, employeeAux->position, employeeAux->next);
+
+                    aux = employeeAux->next;
+                    free(employeeAux);
+                }
+
+                printf("  Total employees in this bucket: %d\n", count);
+                free(e);
+                gavetasOcupadas++;
+            }
+            else
+            {
+                printf("  ERROR: Could not read employee at position %ld\n", position);
+            }
+        }
+
+        printf("\n");
+    }
+
+    // Estatísticas finais
+    printf("==========================================\n");
+    printf("HASH TABLE STATISTICS\n");
+    printf("==========================================\n\n");
+
+    printf("Empty buckets: %d\n", gavetasVazias);
+    printf("Occupied buckets: %d\n", gavetasOcupadas);
+    printf("Occupancy rate: %.2f%%\n", (float)gavetasOcupadas / m * 100);
+
+    // Fecha os arquivos
+    fclose(table);
+    fclose(arqEmployee);
+    
+    // Chama a função para criar o arquivo txt com as gavetas e listas encadeadas
+    createHashTableTxt(m);
+}
+
+// função para criar arquivo txt com as gavetas e listas encadeadas da tabela hash
+void createHashTableTxt(int m)
+{
+    long position;
+    Employee *e = NULL;
+    Employee *employeeAux = NULL;
+    long aux;
+    int count = 0;
+
+    // abre arq da tabela hash
+    FILE *table = fopen("hashTable.dat", "r+b");
+    if (table == NULL)
+    {
+        printf("Error trying to open hashTable.dat para leitura.\n");
+        return;
+    }
+
+    // abre arquivo de funcionários
+    FILE *arqEmployee = fopen("employee.dat", "r+b");
+    if (arqEmployee == NULL)
+    {
+        printf("Error trying to open employee.dat para leitura.\n");
+        fclose(table);
+        return;
+    }
+
+    // cria arquivo txt para salvar as informações da tabela hash
+    FILE *txtFile = fopen("output/hash_table_structure.txt", "w");
+    if (txtFile == NULL)
+    {
+        printf("Error trying to create hash_table_structure.txt file.\n");
+        fclose(table);
+        fclose(arqEmployee);
+        return;
+    }
+
+    // Cabeçalho do arquivo
+    fprintf(txtFile, "==========================================\n");
+    fprintf(txtFile, "ESTRUTURA DA TABELA HASH - FUNCIONÁRIOS\n");
+    fprintf(txtFile, "==========================================\n\n");
+    fprintf(txtFile, "Tamanho da tabela hash: %d gavetas\n\n", m);
+
+    fprintf(txtFile, "DETALHAMENTO DAS GAVETAS E LISTAS ENCADEADAS:\n");
+    fprintf(txtFile, "=============================================\n\n");
+
+    for (int i = 0; i < m; i++)
+    {
+        // Move o ponteiro do arquivo para a posição correspondente no arq
+        fseek(table, i * sizeof(long), SEEK_SET);
+
+        // Le o valor da posição (offset) do funcionario
+        fread(&position, sizeof(long), 1, table);
+
+        fprintf(txtFile, "GAVETA %d:\n", i + 1);
+        fprintf(txtFile, "---------\n");
+
+        if (position == -1)
+        {
+            fprintf(txtFile, "Status: VAZIA\n");
+            fprintf(txtFile, "Lista encadeada: Nenhum funcionário\n");
+        }
+        else
+        {
+            fprintf(txtFile, "Status: OCUPADA\n");
+            fprintf(txtFile, "Posição inicial no arquivo: %ld\n", position);
+            fprintf(txtFile, "Lista encadeada:\n");
+
+            // Lê o primeiro funcionário da gaveta
+            e = readEmployeeInPosition(arqEmployee, position);
+            if (e != NULL)
+            {
+                count = 1;
+                fprintf(txtFile, "  %d. ID: %d | Nome: %s | Cargo: %s | Próximo: %ld\n", 
+                        count, e->id, e->name, e->position, e->next);
+
+                // Percorre APENAS os funcionários da mesma gaveta
+                aux = e->next;
+                while (aux != -1)
+                {
+                    employeeAux = readEmployeeInPosition(arqEmployee, aux);
+                    if (employeeAux == NULL)
+                    {
+                        fprintf(txtFile, "  ERRO: Não foi possível ler funcionário na posição %ld\n", aux);
+                        break;
+                    }
+
+                    // VERIFICAÇÃO CRÍTICA: Verificar se o funcionário pertence à mesma gaveta
+                    int employeeHash = hash(employeeAux->id, m);
+                    if (employeeHash != i)
+                    {
+                        fprintf(txtFile, "  ERRO: Funcionário ID %d não pertence à gaveta %d (hash=%d)\n", 
+                                employeeAux->id, i + 1, employeeHash + 1);
+                        free(employeeAux);
+                        break;
+                    }
+
+                    count++;
+                    fprintf(txtFile, "  %d. ID: %d | Nome: %s | Cargo: %s | Próximo: %ld\n", 
+                            count, employeeAux->id, employeeAux->name, employeeAux->position, employeeAux->next);
+
+                    aux = employeeAux->next;
+                    free(employeeAux);
+                }
+
+                fprintf(txtFile, "  Total de funcionários nesta gaveta: %d\n", count);
+                free(e);
+            }
+            else
+            {
+                fprintf(txtFile, "  ERRO: Não foi possível ler funcionário na posição %ld\n", position);
+            }
+        }
+
+        fprintf(txtFile, "\n");
+    }
+
+    // Estatísticas finais
+    fprintf(txtFile, "==========================================\n");
+    fprintf(txtFile, "ESTATÍSTICAS DA TABELA HASH\n");
+    fprintf(txtFile, "==========================================\n\n");
+
+    // Conta gavetas vazias e ocupadas
+    int gavetasVazias = 0, gavetasOcupadas = 0;
+    rewind(table);
+    
+    for (int i = 0; i < m; i++)
+    {
+        fread(&position, sizeof(long), 1, table);
+        if (position == -1)
+        {
+            gavetasVazias++;
+        }
+        else
+        {
+            gavetasOcupadas++;
         }
     }
 
+    fprintf(txtFile, "Gavetas vazias: %d\n", gavetasVazias);
+    fprintf(txtFile, "Gavetas ocupadas: %d\n", gavetasOcupadas);
+    fprintf(txtFile, "Taxa de ocupação: %.2f%%\n", (float)gavetasOcupadas / m * 100);
+
+    // Fecha os arquivos
     fclose(table);
+    fclose(arqEmployee);
+    fclose(txtFile);
+
+    // Removed file creation message
 }
